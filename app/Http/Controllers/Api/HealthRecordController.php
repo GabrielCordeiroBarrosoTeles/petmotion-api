@@ -42,6 +42,6 @@ class HealthRecordController extends Controller
 
     private function authorizePet(Request $request, Pet $pet): void
     {
-        abort_unless($pet->user_id === $request->user()->id, 404);
+        abort_unless($pet->isOwnedBy($request->user()), 404);
     }
 }

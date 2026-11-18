@@ -28,6 +28,23 @@ class Walk extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** Quem fez o passeio (dono ou passeador). */
+    public function walker(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id')->select('id', 'name');
+    }
+
+    /** O passeador sai só com id e nome: o dono não precisa do resto da conta. */
+    public function toArray(): array
+    {
+        $array = parent::toArray();
+        if (isset($array['walker'])) {
+            $array['walker'] = ['id' => $array['walker']['id'], 'name' => $array['walker']['name']];
+        }
+
+        return $array;
+    }
+
     public function pet(): BelongsTo
     {
         return $this->belongsTo(Pet::class);
@@ -38,20 +55,20 @@ class Walk extends Model
         return $this->hasMany(WalkEvent::class);
     }
 
-    /** Os outros pets que foram junto neste passeio (vazio quando foi sozinho). */
-    public function companions(): Collection
+    /** Os outros pets que foram junto neste passeio e que quem pergunta pode ver (vazio quando foi sozinho). */
+    public function companions(User $viewer): Collection
     {
         if (! $this->group_id) {
             return new Collection;
         }
 
-        return Pet::whereIn('id', self::where('group_id', $this->group_id)->whereKeyNot($this->id)->select('pet_id'))
-            ->get(['id', 'name', 'species', 'photo_path']);
+        return Pet::accessibleBy($viewer)->whereIn('id', self::where('group_id', $this->group_id)->whereKeyNot($this->id)->select('pet_id'))
+            ->get(['pets.id', 'pets.name', 'pets.species', 'pets.photo_path']);
     }
 
     /** Resposta da API: o passeio com eventos, pet e companheiros. */
-    public function withDetails(): self
+    public function withDetails(User $viewer): self
     {
-        return $this->load('events', 'pet')->setAttribute('companions', $this->companions());
+        return $this->load('events', 'pet', 'walker')->setAttribute('companions', $this->companions($viewer));
     }
 }

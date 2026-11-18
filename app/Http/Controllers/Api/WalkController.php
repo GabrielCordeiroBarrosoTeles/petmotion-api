@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pet;
 use App\Models\Walk;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,9 +15,18 @@ class WalkController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $walks = $request->user()->walks()
-            ->with('pet:id,name,species,photo_path', 'events')
-            ->when($request->integer('pet_id'), fn ($q, $petId) => $q->where('pet_id', $petId))
+        $user = $request->user();
+        $petId = $request->integer('pet_id');
+        $query = $user->walks();
+
+        if ($petId) {
+            $pet = Pet::accessibleBy($user)->findOrFail($petId);
+            // o dono vê os passeios de todo mundo; o passeador só os dele
+            $query = $pet->isOwnedBy($user) ? $pet->walks() : $query->where('pet_id', $pet->id);
+        }
+
+        $walks = $query
+            ->with('pet:id,name,species,photo_path', 'events', 'walker')
             ->latest('started_at')
             ->paginate(15);
 
@@ -47,7 +57,7 @@ class WalkController extends Controller
 
         // passeio em grupo: o mesmo trajeto vira um registro por pet, então meta e conquistas de cada um seguem certas
         $petIds = array_values(array_unique([$data['pet_id'], ...($data['companion_ids'] ?? [])]));
-        abort_unless($request->user()->pets()->whereKey($petIds)->count() === count($petIds), 404);
+        abort_unless(Pet::accessibleBy($request->user())->whereKey($petIds)->count() === count($petIds), 404);
         unset($data['companion_ids']);
         $data['group_id'] = count($petIds) > 1 ? (string) Str::uuid() : null;
 
@@ -70,21 +80,28 @@ class WalkController extends Controller
             return $walks[0];
         });
 
-        return response()->json($walk->withDetails(), 201);
+        return response()->json($walk->withDetails($request->user()), 201);
     }
 
     public function show(Request $request, Walk $walk): JsonResponse
     {
-        abort_unless($walk->user_id === $request->user()->id, 404);
+        $this->authorizeWalk($request, $walk);
 
-        return response()->json($walk->withDetails());
+        return response()->json($walk->withDetails($request->user()));
     }
 
     public function destroy(Request $request, Walk $walk): JsonResponse
     {
-        abort_unless($walk->user_id === $request->user()->id, 404);
+        $this->authorizeWalk($request, $walk);
         $walk->delete();
 
         return response()->json(status: 204);
+    }
+
+    /** Quem passeou ou o dono do pet. */
+    private function authorizeWalk(Request $request, Walk $walk): void
+    {
+        $user = $request->user();
+        abort_unless($walk->user_id === $user->id || $walk->pet->isOwnedBy($user), 404);
     }
 }
