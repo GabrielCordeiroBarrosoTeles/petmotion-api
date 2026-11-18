@@ -2,7 +2,7 @@
 #
 # Não encosta em nada do ToLembrado:
 #   - projeto "petmotion" (o ToLembrado é tolembrado-api / tolembrado-app)
-#   - portas internas 8095 (nginx) e 9095 (PHP-FPM); nenhuma porta publicada na VPS
+#   - portas internas 8095 (nginx), 9095 (PHP-FPM) e 8096 (Reverb, passeio ao vivo); nenhuma porta publicada na VPS
 #   - banco SQLite no volume petmotion_storage (não usa Postgres, Redis nem MinIO)
 #   - rede interna própria; só o nginx entra na rede "tolembrado", para o túnel
 #     da Cloudflare alcançar http://petmotion-web:8095
@@ -28,6 +28,28 @@ services:
       timeout: 3s
       retries: 5
 
+  # WebSocket do passeio ao vivo. Só na rede interna: o nginx do petmotion-web
+  # encaminha /app e /apps para cá (o túnel da Cloudflare já aceita WebSocket).
+  petmotion-reverb:
+    <<: *restart
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: php
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8096"]
+    env_file: .env
+    volumes:
+      - storage:/var/www/html/storage
+    depends_on:
+      petmotion-php:
+        condition: service_healthy
+    networks: [interno]
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 8096) ? 0 : 1);'"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
   petmotion-web:
     <<: *restart
     build:
@@ -38,6 +60,8 @@ services:
       - storage:/var/www/html/storage:ro
     depends_on:
       petmotion-php:
+        condition: service_healthy
+      petmotion-reverb:
         condition: service_healthy
     networks: [interno, tolembrado]
 

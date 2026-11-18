@@ -281,4 +281,32 @@ class MonitorTest extends TestCase
             ->assertSee('Falhou')
             ->assertSee('nunca');
     }
+
+    public function test_monitor_uses_pais_de_pet(): void
+    {
+        $admin = $this->makeAdmin();
+        $this->makeUser(['name' => 'Gabriel Cordeiro']);
+
+        $this->actingAs($admin)->get('/monitor/tutores')
+            ->assertOk()->assertSee('Pais de pet')->assertSee('Pai/mãe de pet')->assertDontSee('Tutores');
+        $this->get('/monitor')->assertSee('Pais de pet')->assertDontSee('Tutores');
+        $this->get('/monitor/pets')->assertDontSee('<th>Tutor</th>', false);
+    }
+
+    public function test_walk_detail_shows_walker_when_not_the_owner(): void
+    {
+        $owner = $this->makeUser(['name' => 'Dona Maria']);
+        $pet = $this->makePet($owner, ['name' => 'Thor']);
+        $walker = $this->makeWalker($pet);
+        $walker->update(['name' => 'Joao Passeador']);
+        $byOwner = $this->makeWalk($pet, now()->subHours(2));
+        $byWalker = $walker->walks()->create([
+            'pet_id' => $pet->id, 'started_at' => now()->subHour(), 'ended_at' => now(), 'duration_seconds' => 1800,
+            'distance_meters' => 1500, 'steps' => 1900, 'points' => [[-23.58, -46.65]],
+        ]);
+
+        $this->actingAs($this->makeAdmin())->get(route('monitor.walks.show', $byWalker))
+            ->assertOk()->assertSee('Passeador')->assertSee('Joao Passeador')->assertSee('Dona Maria');
+        $this->get(route('monitor.walks.show', $byOwner))->assertOk()->assertDontSee('Passeador')->assertSee('Dona Maria');
+    }
 }

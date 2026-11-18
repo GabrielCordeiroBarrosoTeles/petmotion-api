@@ -18,7 +18,7 @@ class MonitorController extends Controller
             return redirect()->route('monitor');
         }
 
-        // Só totais agregados (o site público já mostra números parecidos): nada de dado de tutor.
+        // Só totais agregados (o site público já mostra números parecidos): nada de dado de pai/mãe de pet.
         return view('monitor.login', [
             'pulse' => [
                 'walksToday' => Walk::whereDate('started_at', Carbon::today())->count(),

@@ -44,6 +44,6 @@ class WalkController extends Controller
 
     public function show(Walk $walk): View
     {
-        return view('monitor.walks.show', ['walk' => $walk->load('pet', 'user', 'events')]);
+        return view('monitor.walks.show', ['walk' => $walk->load('pet.user', 'user', 'events')]);
     }
 }

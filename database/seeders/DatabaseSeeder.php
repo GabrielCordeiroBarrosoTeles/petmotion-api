@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     // Centro do trajeto demo (Parque Ibirapuera, SP)
     private const LAT = -23.5874;
+
     private const LNG = -46.6576;
 
     public function run(): void

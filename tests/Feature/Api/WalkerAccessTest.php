@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Walk;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
@@ -38,8 +39,8 @@ class WalkerAccessTest extends TestCase
             ->assertCreated();
 
         $this->assertDatabaseCount('walks', 3);
-        $this->assertSame(1, \App\Models\Walk::distinct()->pluck('group_id')->count());
-        $this->assertSame(3, \App\Models\Walk::where('user_id', $walker->id)->count());
+        $this->assertSame(1, Walk::distinct()->pluck('group_id')->count());
+        $this->assertSame(3, Walk::where('user_id', $walker->id)->count());
 
         $this->postJson('/api/walks', $this->payload($thor->id, ['companion_ids' => [$stranger->id]]), $this->bearer($walker))
             ->assertNotFound();
@@ -63,7 +64,7 @@ class WalkerAccessTest extends TestCase
         $this->assertCount(2, $res->json('companions'));
 
         $this->app['auth']->forgetGuards();
-        $walkId = \App\Models\Walk::where('pet_id', $thor->id)->value('id');
+        $walkId = Walk::where('pet_id', $thor->id)->value('id');
         $this->getJson("/api/walks/{$walkId}", $this->bearer($ana))
             ->assertOk()
             ->assertJsonCount(1, 'companions')

@@ -25,7 +25,7 @@
         <div class="panel-head"><h2>{{ $title }}</h2></div>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Cuidado</th><th>Pet</th><th>Tutor</th><th>Próxima dose</th><th>Situação</th></tr></thead>
+                <thead><tr><th>Cuidado</th><th>Pet</th><th>Pai/mãe de pet</th><th>Próxima dose</th><th>Situação</th></tr></thead>
                 <tbody>
                 @forelse ($records as $record)
                     @php $days = (int) $today->diffInDays($record->next_date, false); @endphp

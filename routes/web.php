@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\Monitor\DashboardController;
@@ -18,6 +19,7 @@ Route::get('/robots.txt', [LandingController::class, 'robots']);
 Route::get('/llms.txt', [LandingController::class, 'llms']);
 Route::get('/privacidade', [LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/termos', [LegalController::class, 'terms'])->name('legal.terms');
+Route::get('/convite/{code}', InviteController::class)->name('invite');
 
 Route::prefix('monitor')->group(function () {
     Route::get('/login', [MonitorController::class, 'showLogin'])->name('monitor.login');

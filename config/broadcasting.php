@@ -35,11 +35,13 @@ return [
             'key' => env('REVERB_APP_KEY'),
             'secret' => env('REVERB_APP_SECRET'),
             'app_id' => env('REVERB_APP_ID'),
+            // Onde o Laravel PUBLICA os eventos. No deploy é o container do Reverb, dentro da rede
+            // interna (petmotion-reverb:8096, http); sem REVERB_PUBLISH_*, usa o endereço público.
             'options' => [
-                'host' => env('REVERB_HOST'),
-                'port' => env('REVERB_PORT', 443),
-                'scheme' => env('REVERB_SCHEME', 'https'),
-                'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
+                'host' => env('REVERB_PUBLISH_HOST', env('REVERB_HOST')),
+                'port' => env('REVERB_PUBLISH_PORT', env('REVERB_PORT', 443)),
+                'scheme' => env('REVERB_PUBLISH_SCHEME', env('REVERB_SCHEME', 'https')),
+                'useTLS' => env('REVERB_PUBLISH_SCHEME', env('REVERB_SCHEME', 'https')) === 'https',
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html

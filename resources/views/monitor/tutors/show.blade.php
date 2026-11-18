@@ -15,7 +15,7 @@
 @section('content')
 <div class="page-head">
     <div>
-        <a class="back" href="{{ route('monitor.tutors') }}"><x-monitor.icon name="arrow-left" :size="16" />Tutores</a>
+        <a class="back" href="{{ route('monitor.tutors') }}"><x-monitor.icon name="arrow-left" :size="16" />Pais de pet</a>
         <div class="profile">
             <span class="avatar lg">{{ mb_strtoupper(mb_substr($tutor->name, 0, 1)) }}</span>
             <div>
@@ -33,7 +33,7 @@
     </div>
 </div>
 
-<section class="kpis" aria-label="Resumo do tutor">
+<section class="kpis" aria-label="Resumo do pai/mãe de pet">
     <div class="kpi hot"><span>Passeios</span><strong>{{ $totals['walks'] }}</strong></div>
     <div class="kpi"><span>Km no total</span><strong>{{ number_format($totals['km'], 1, ',', '.') }}</strong></div>
     <div class="kpi"><span>Pets</span><strong>{{ $tutor->pets->count() }}</strong></div>
@@ -43,7 +43,7 @@
 <section class="panel">
     <div class="panel-head"><h2>Pets</h2></div>
     @if ($tutor->pets->isEmpty())
-        <div class="empty"><b>Ainda sem pets.</b>O tutor criou a conta, mas não cadastrou nenhum pet.</div>
+        <div class="empty"><b>Ainda sem pets.</b>A pessoa criou a conta, mas não cadastrou nenhum pet.</div>
     @else
         <div class="pet-cards">
             @foreach ($tutor->pets as $pet)

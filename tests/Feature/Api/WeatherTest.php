@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class WeatherTest extends TestCase
@@ -15,7 +16,7 @@ class WeatherTest extends TestCase
         Http::fake(['api.open-meteo.com/*' => Http::response(['current' => $current])]);
     }
 
-    private function weather(): \Illuminate\Testing\TestResponse
+    private function weather(): TestResponse
     {
         return $this->getJson('/api/weather?lat=-23.58&lng=-46.65', $this->bearer($this->makeUser()));
     }

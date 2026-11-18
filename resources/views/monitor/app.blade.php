@@ -4,7 +4,7 @@
     $navItems = [
         ['route' => 'monitor', 'match' => 'monitor', 'icon' => 'home', 'label' => 'Visão geral'],
         ['route' => 'monitor.walks', 'match' => 'monitor.walks*', 'icon' => 'route', 'label' => 'Passeios', 'badge' => $nav['walksToday'], 'badgeTitle' => 'passeios hoje'],
-        ['route' => 'monitor.tutors', 'match' => 'monitor.tutors*', 'icon' => 'users', 'label' => 'Tutores'],
+        ['route' => 'monitor.tutors', 'match' => 'monitor.tutors*', 'icon' => 'users', 'label' => 'Pais de pet'],
         ['route' => 'monitor.pets', 'match' => 'monitor.pets*', 'icon' => 'paw', 'label' => 'Pets'],
         ['route' => 'monitor.health', 'match' => 'monitor.health', 'icon' => 'heart', 'label' => 'Saúde', 'badge' => $nav['lateHealth'], 'badgeTitle' => 'cuidados atrasados', 'alert' => true],
         ['route' => 'monitor.system', 'match' => 'monitor.system', 'icon' => 'server', 'label' => 'Sistema'],

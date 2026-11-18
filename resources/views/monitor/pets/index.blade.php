@@ -25,7 +25,7 @@
 <section class="panel">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Pet</th><th>Tutor</th><th>Raça</th><th>Peso</th><th>Km na semana</th><th>Meta da semana</th></tr></thead>
+            <thead><tr><th>Pet</th><th>Pai/mãe de pet</th><th>Raça</th><th>Peso</th><th>Km na semana</th><th>Meta da semana</th></tr></thead>
             <tbody>
             @forelse ($pets as $pet)
                 @php

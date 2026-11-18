@@ -26,7 +26,7 @@ class SystemController extends Controller
                 'Endereço público' => config('app.url'),
             ],
             'counts' => [
-                'Tutores' => User::where('is_admin', false)->count(),
+                'Pais de pet' => User::where('is_admin', false)->count(),
                 'Administradores' => User::where('is_admin', true)->count(),
                 'Pets' => Pet::count(),
                 'Passeios' => Walk::count(),

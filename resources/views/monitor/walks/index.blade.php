@@ -12,7 +12,7 @@
 <form class="filters" method="GET" action="{{ route('monitor.walks') }}">
     <label class="search">
         <x-monitor.icon name="search" :size="18" />
-        <input type="search" name="q" value="{{ $search }}" placeholder="Buscar por pet ou tutor" aria-label="Buscar por pet ou tutor">
+        <input type="search" name="q" value="{{ $search }}" placeholder="Buscar por pet ou pai/mãe de pet" aria-label="Buscar por pet ou pai/mãe de pet">
     </label>
     <input type="hidden" name="period" value="{{ $period }}">
     <nav class="seg" aria-label="Período">
@@ -25,7 +25,7 @@
 <section class="panel">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Pet</th><th>Tutor</th><th>Início</th><th>Duração</th><th>Distância</th><th>Passos</th><th>Marcações</th></tr></thead>
+            <thead><tr><th>Pet</th><th>Pai/mãe de pet</th><th>Início</th><th>Duração</th><th>Distância</th><th>Passos</th><th>Marcações</th></tr></thead>
             <tbody>
             @forelse ($walks as $walk)
                 <tr class="link" data-href="{{ route('monitor.walks.show', $walk) }}">

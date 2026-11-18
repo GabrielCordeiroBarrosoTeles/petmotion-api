@@ -24,7 +24,8 @@
     <div>
         <a class="back" href="{{ route('monitor.walks') }}"><x-monitor.icon name="arrow-left" :size="16" />Passeios</a>
         <h1>{{ $walk->pet->name }}, {{ number_format($walk->distance_meters / 1000, 2, ',', '.') }} km</h1>
-        <p>{{ $walk->started_at->translatedFormat('j \d\e F \d\e Y, H:i') }} com <a href="{{ route('monitor.tutors.show', $walk->user) }}">{{ $walk->user->name }}</a></p>
+        <p>{{ $walk->started_at->translatedFormat('j \d\e F \d\e Y, H:i') }} @if ($walk->user_id === $walk->pet->user_id)com <a href="{{ route('monitor.tutors.show', $walk->user) }}">{{ $walk->user->name }}</a>@else
+            com <a href="{{ route('monitor.tutors.show', $walk->user) }}">{{ $walk->user->name }}</a>, passeador de <a href="{{ route('monitor.tutors.show', $walk->pet->user) }}">{{ $walk->pet->user->name }}</a>@endif</p>
     </div>
 </div>
 
@@ -41,6 +42,9 @@
     <section class="panel">
         <div class="panel-head"><h2>Resumo</h2></div>
         <dl class="facts">
+            @if ($walk->user_id !== $walk->pet->user_id)
+                <div><dt>Passeador</dt><dd>{{ $walk->user->name }}</dd></div>
+            @endif
             <div><dt>Duração</dt><dd>{{ intdiv($walk->duration_seconds, 60) }} min</dd></div>
             <div><dt>Distância</dt><dd>{{ number_format($walk->distance_meters / 1000, 2, ',', '.') }} km</dd></div>
             <div><dt>Passos</dt><dd>{{ number_format($walk->steps, 0, ',', '.') }}</dd></div>

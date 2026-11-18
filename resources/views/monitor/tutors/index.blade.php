@@ -1,10 +1,10 @@
 @extends('monitor.app')
-@section('title', 'Tutores')
+@section('title', 'Pais de pet')
 
 @section('content')
 <div class="page-head">
     <div>
-        <h1>Tutores</h1>
+        <h1>Pais de pet</h1>
         <p>{{ $tutors->total() }} {{ $tutors->total() === 1 ? 'pessoa cadastrada' : 'pessoas cadastradas' }} no app.</p>
     </div>
 </div>
@@ -19,7 +19,7 @@
 <section class="panel">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Tutor</th><th>Pets</th><th>Passeios</th><th>Km no total</th><th>Último passeio</th><th>Desde</th></tr></thead>
+            <thead><tr><th>Pai/mãe de pet</th><th>Pets</th><th>Passeios</th><th>Km no total</th><th>Último passeio</th><th>Desde</th></tr></thead>
             <tbody>
             @forelse ($tutors as $tutor)
                 <tr class="link" data-href="{{ route('monitor.tutors.show', $tutor) }}">

@@ -10,6 +10,24 @@ cd "$(dirname "$0")"
 grep -q '^APP_KEY=base64:' .env || { echo "Defina APP_KEY no infra/.env (veja o comentário no .env.example)." >&2; exit 1; }
 docker network inspect tolembrado >/dev/null 2>&1 || { echo "Rede 'tolembrado' não existe: o ToLembrado está rodando?" >&2; exit 1; }
 
+# Passeio ao vivo: preenche o que faltar do Reverb. Nunca troca um valor que já existe.
+ensure_env() {  # ensure_env CHAVE VALOR
+  grep -qE "^$1=.+" .env && return 0
+  if grep -qE "^$1=" .env; then sed -i.bak "s|^$1=.*|$1=$2|" .env && rm -f .env.bak; else printf '%s=%s\n' "$1" "$2" >> .env; fi
+}
+ensure_env BROADCAST_CONNECTION reverb
+ensure_env REVERB_APP_ID "$(openssl rand -hex 8)"
+ensure_env REVERB_APP_KEY "$(openssl rand -hex 16)"
+ensure_env REVERB_APP_SECRET "$(openssl rand -hex 32)"
+ensure_env REVERB_HOST petmotion.tolembrado.com.br
+ensure_env REVERB_PORT 443
+ensure_env REVERB_SCHEME https
+ensure_env REVERB_SERVER_HOST 0.0.0.0
+ensure_env REVERB_SERVER_PORT 8096
+ensure_env REVERB_PUBLISH_HOST petmotion-reverb
+ensure_env REVERB_PUBLISH_PORT 8096
+ensure_env REVERB_PUBLISH_SCHEME http
+
 echo "==> Código"
 git -C .. pull --ff-only
 

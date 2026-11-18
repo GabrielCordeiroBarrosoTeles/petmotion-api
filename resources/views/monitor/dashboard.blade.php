@@ -52,7 +52,7 @@
     <div class="kpi">
         <span><x-monitor.icon name="users" :size="16" />Comunidade</span>
         <strong>{{ $kpis['tutors'] }}</strong>
-        <small>tutores e {{ $kpis['pets'] }} pets · {{ $kpis['premium'] }} na Matilha</small>
+        <small>pais de pet e {{ $kpis['pets'] }} pets · {{ $kpis['premium'] }} na Matilha</small>
     </div>
     <a class="kpi kpi-link {{ $kpis['lateHealth'] ? 'alert' : '' }}" href="{{ route('monitor.health') }}">
         <span><x-monitor.icon name="heart" :size="16" />Cuidados atrasados</span>
@@ -100,7 +100,7 @@
     <div class="panel-head"><h2>Últimos passeios</h2><a href="{{ route('monitor.walks') }}">Ver todos</a></div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Pet</th><th>Tutor</th><th>Quando</th><th>Duração</th><th>Distância</th><th>Marcações</th></tr></thead>
+            <thead><tr><th>Pet</th><th>Pai/mãe de pet</th><th>Quando</th><th>Duração</th><th>Distância</th><th>Marcações</th></tr></thead>
             <tbody>
             @forelse ($recentWalks as $walk)
                 <tr class="link" data-href="{{ route('monitor.walks.show', $walk) }}">

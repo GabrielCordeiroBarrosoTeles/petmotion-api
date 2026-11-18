@@ -139,7 +139,7 @@
 
         <div>
             <h1>Cada passeio, em tempo real.</h1>
-            <p>Acompanhe tutores, pets, trajetos e cuidados de saúde de toda a comunidade PetMotion.</p>
+            <p>Acompanhe pais de pet, pets, trajetos e cuidados de saúde de toda a comunidade PetMotion.</p>
         </div>
     </section>
 
