@@ -1,0 +1,50 @@
+# PetMotion na VPS do ToLembrado, isolado num projeto próprio. Rodar de dentro de infra/: ./deploy.sh
+#
+# Não encosta em nada do ToLembrado:
+#   - projeto "petmotion" (o ToLembrado é tolembrado-api / tolembrado-app)
+#   - portas internas 8095 (nginx) e 9095 (PHP-FPM); nenhuma porta publicada na VPS
+#   - banco SQLite no volume petmotion_storage (não usa Postgres, Redis nem MinIO)
+#   - rede interna própria; só o nginx entra na rede "tolembrado", para o túnel
+#     da Cloudflare alcançar http://petmotion-web:8095
+name: petmotion
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  petmotion-php:
+    <<: *restart
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: php
+    env_file: .env
+    volumes:
+      - storage:/var/www/html/storage
+    networks: [interno]
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 9095) ? 0 : 1);'"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  petmotion-web:
+    <<: *restart
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: web
+    volumes:
+      - storage:/var/www/html/storage:ro
+    depends_on:
+      petmotion-php:
+        condition: service_healthy
+    networks: [interno, tolembrado]
+
+networks:
+  interno:
+  tolembrado:
+    external: true
+
+volumes:
+  storage:

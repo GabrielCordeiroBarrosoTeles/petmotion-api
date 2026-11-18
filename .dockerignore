@@ -1,0 +1,21 @@
+# Nada local vai para a imagem: segredos, banco, dependências e arquivos gerados.
+.git
+.env
+.env.*
+!.env.example
+infra/.env
+vendor
+node_modules
+database/*.sqlite*
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+storage/*.key
+public/storage
+public/_*
+tests
+graphify-out
+.phpunit.cache
+.phpunit.result.cache

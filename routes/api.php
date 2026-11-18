@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HealthRecordController;
 use App\Http\Controllers\Api\PetController;
+use App\Http\Controllers\Api\PremiumController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\WalkController;
 use App\Http\Controllers\Api\WeatherController;
@@ -18,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::delete('/me', [AuthController::class, 'destroy'])->middleware('throttle:5,1');
+    Route::post('/premium/trial', [PremiumController::class, 'trial']);
 
     Route::apiResource('pets', PetController::class);
     // multipart com foto: RN não envia PUT multipart de forma confiável

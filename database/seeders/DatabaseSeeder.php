@@ -15,8 +15,16 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $admin = User::create(['name' => 'Admin', 'email' => 'admin@petmotion.app', 'password' => 'petmotion']);
+        // Em produção, SEED_ADMIN_PASSWORD (infra/.env) troca a senha das contas com acesso ao monitor.
+        $adminPassword = env('SEED_ADMIN_PASSWORD');
+
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin@petmotion.app', 'password' => $adminPassword ?: 'petmotion']);
         $admin->forceFill(['is_admin' => true])->save();
+
+        // Acessos pedidos pelo Gabriel: cliente (app) e suporte (monitor)
+        User::create(['name' => 'Cordeiro Cliente', 'email' => 'cordeiro@cliente.com', 'password' => '12345678']);
+        User::create(['name' => 'Cordeiro Suporte', 'email' => 'cordeiro@suporte.com', 'password' => $adminPassword ?: '12345678'])
+            ->forceFill(['is_admin' => true])->save();
 
         $tutors = [
             ['Gabriel Cordeiro', 'gabriel@petmotion.app', [['Thor', 'dog', 'Golden Retriever', 32.4, 40], ['Mel', 'dog', 'Vira-lata caramelo', 14.1, 30]]],
@@ -26,6 +34,10 @@ class DatabaseSeeder extends Seeder
 
         foreach ($tutors as [$name, $email, $pets]) {
             $user = User::create(['name' => $name, 'email' => $email, 'password' => 'petmotion']);
+            if ($email === 'gabriel@petmotion.app') {
+                // conta demo completa já é da Matilha (o cordeiro@cliente fica no grátis para mostrar o fluxo)
+                $user->forceFill(['premium_until' => now()->addDays(30), 'trial_started_at' => now()->subDays(10)])->save();
+            }
 
             foreach ($pets as [$petName, $species, $breed, $weight, $goal]) {
                 $pet = $user->pets()->create([

@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn () => route('monitor.login'));
+        // Em produção a requisição chega pelo túnel da Cloudflare → nginx (rede interna do Docker):
+        // confia no X-Forwarded-Proto/For para gerar links https:// e o cookie seguro funcionar.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

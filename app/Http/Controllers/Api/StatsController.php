@@ -15,8 +15,7 @@ class StatsController extends Controller
         abort_unless($pet->user_id === $request->user()->id, 404);
 
         $upcoming = $pet->healthRecords()
-            ->whereNotNull('next_date')
-            ->where('next_date', '>=', today()->subDays(7))
+            ->dueSince(7)
             ->orderBy('next_date')
             ->limit(3)
             ->get();

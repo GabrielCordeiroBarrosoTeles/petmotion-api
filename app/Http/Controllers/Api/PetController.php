@@ -17,6 +17,13 @@ class PetController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (! $request->user()->canAddPet()) {
+            return response()->json([
+                'code' => 'premium_required',
+                'message' => 'No plano grátis cabe 1 pet. Entre para a Matilha para ter pets ilimitados.',
+            ], 403);
+        }
+
         $pet = $request->user()->pets()->create($this->validated($request));
         $this->storePhoto($request, $pet);
 

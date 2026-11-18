@@ -24,7 +24,7 @@ php artisan serve --host=0.0.0.0 --port=8000
 ```
 
 - Site: http://localhost:8000
-- Monitor: http://localhost:8000/monitor (`admin@petmotion.app` / `petmotion`)
+- Monitor: http://localhost:8000/monitor (`admin@petmotion.app` / `petmotion` no ambiente local)
 - Contas demo do app: `gabriel@petmotion.app`, `ana@petmotion.app` e `lucas@petmotion.app`, senha `petmotion`
 
 ## Endpoints
