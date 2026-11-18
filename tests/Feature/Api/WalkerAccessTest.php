@@ -83,13 +83,15 @@ class WalkerAccessTest extends TestCase
         $byName = collect($res->json())->keyBy('name');
         $this->assertSame('owner', $byName['Meu']['role']);
         $this->assertArrayNotHasKey('owner_name', $byName['Meu']);
+        $this->assertArrayNotHasKey('user', $byName['Meu']);
+        $this->assertArrayNotHasKey('user', $byName['Thor']);
         $this->assertSame('walker', $byName['Thor']['role']);
         $this->assertSame('Ana', $byName['Thor']['owner_name']);
 
         $this->getJson("/api/pets/{$shared->id}", $this->bearer($me))
-            ->assertOk()->assertJsonPath('role', 'walker')->assertJsonPath('owner_name', 'Ana');
+            ->assertOk()->assertJsonPath('role', 'walker')->assertJsonPath('owner_name', 'Ana')->assertJsonMissingPath('user');
         $this->getJson("/api/pets/{$own->id}", $this->bearer($me))
-            ->assertOk()->assertJsonPath('role', 'owner')->assertJsonMissingPath('owner_name');
+            ->assertOk()->assertJsonPath('role', 'owner')->assertJsonMissingPath('owner_name')->assertJsonMissingPath('user');
     }
 
     public function test_walker_can_walk_shared_pet(): void
@@ -189,5 +191,29 @@ class WalkerAccessTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->getJson("/api/walks?pet_id={$pet->id}", $this->bearer($owner))
             ->assertJsonPath('data.0.walker.name', 'Paulo Passeador');
+    }
+
+    public function test_removed_walker_loses_sight_of_his_past_walks(): void
+    {
+        $owner = $this->makeUser();
+        $pet = $this->makePet($owner);
+        $walker = $this->makeWalker($pet);
+        $walkId = $this->postJson('/api/walks', $this->payload($pet->id), $this->bearer($walker))->assertCreated()->json('id');
+        $this->app['auth']->forgetGuards();
+        $this->getJson("/api/walks/{$walkId}", $this->bearer($walker))
+            ->assertOk()->assertJsonPath('walker.id', $walker->id);
+
+        $pet->walkers()->detach($walker->id);
+
+        $this->app['auth']->forgetGuards();
+        $this->getJson("/api/walks/{$walkId}", $this->bearer($walker))->assertNotFound();
+        $this->app['auth']->forgetGuards();
+        $this->getJson('/api/walks', $this->bearer($walker))->assertJsonCount(0, 'data');
+        $this->app['auth']->forgetGuards();
+        $this->deleteJson("/api/walks/{$walkId}", [], $this->bearer($walker))->assertNotFound();
+        $this->app['auth']->forgetGuards();
+        $this->getJson('/api/walks', $this->bearer($owner))->assertJsonCount(0, 'data');
+        $this->getJson("/api/walks?pet_id={$pet->id}", $this->bearer($owner))->assertJsonCount(1, 'data');
+        $this->getJson("/api/walks/{$walkId}", $this->bearer($owner))->assertOk();
     }
 }

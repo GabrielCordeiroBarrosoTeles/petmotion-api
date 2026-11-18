@@ -17,7 +17,7 @@ class WalkController extends Controller
     {
         $user = $request->user();
         $petId = $request->integer('pet_id');
-        $query = $user->walks();
+        $query = $user->walks()->whereIn('pet_id', Pet::accessibleBy($user)->select('pets.id'));
 
         if ($petId) {
             $pet = Pet::accessibleBy($user)->findOrFail($petId);
@@ -98,10 +98,10 @@ class WalkController extends Controller
         return response()->json(status: 204);
     }
 
-    /** Quem passeou ou o dono do pet. */
+    /** O dono do pet, ou quem passeou enquanto ainda tem acesso ao pet. */
     private function authorizeWalk(Request $request, Walk $walk): void
     {
         $user = $request->user();
-        abort_unless($walk->user_id === $user->id || $walk->pet->isOwnedBy($user), 404);
+        abort_unless($walk->pet->isOwnedBy($user) || ($walk->user_id === $user->id && $walk->pet->canBeWalkedBy($user)), 404);
     }
 }

@@ -97,11 +97,13 @@ class PetController extends Controller
     private function withRole(Pet $pet, User $user): Pet
     {
         if ($pet->isOwnedBy($user)) {
-            return $pet->setAttribute('role', 'owner');
+            return $pet->setAttribute('role', 'owner')->unsetRelation('user');
         }
 
+        $ownerName = Str::before($pet->user->name, ' ');
+
         return $pet->setAttribute('role', 'walker')
-            ->setAttribute('owner_name', Str::before($pet->user->name, ' '))
+            ->setAttribute('owner_name', $ownerName)
             ->unsetRelation('user');
     }
 }
