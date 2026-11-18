@@ -13,6 +13,7 @@ docker network inspect tolembrado >/dev/null 2>&1 || { echo "Rede 'tolembrado' n
 # Passeio ao vivo: preenche o que faltar do Reverb. Nunca troca um valor que já existe.
 ensure_env() {  # ensure_env CHAVE VALOR
   grep -qE "^$1=.+" .env && return 0
+  [ -z "$(tail -c1 .env)" ] || echo >> .env   # garante quebra de linha no fim, senão a chave cola na anterior
   if grep -qE "^$1=" .env; then sed -i.bak "s|^$1=.*|$1=$2|" .env && rm -f .env.bak; else printf '%s=%s\n' "$1" "$2" >> .env; fi
 }
 ensure_env BROADCAST_CONNECTION reverb

@@ -42,4 +42,18 @@ class LegalTest extends TestCase
         config(['petmotion.legal.city' => 'Fortaleza/CE', 'petmotion.legal.document' => '123']);
         $this->get('/termos')->assertOk()->assertSee('foro de Fortaleza/CE, à sua escolha')->assertSee('(nº 123)');
     }
+
+    public function test_privacy_describes_shared_walker_and_live_walk(): void
+    {
+        $this->get('/privacidade')->assertOk()
+            ->assertSee('Passeio ao vivo')
+            ->assertSee('48 horas')
+            ->assertSee('por até 3 horas')
+            ->assertSee('Passeador');
+    }
+
+    public function test_terms_use_neutral_wording_for_the_owner(): void
+    {
+        $this->get('/termos')->assertOk()->assertDontSee('tutor');
+    }
 }

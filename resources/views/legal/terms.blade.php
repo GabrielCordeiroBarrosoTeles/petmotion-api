@@ -22,7 +22,7 @@
 
     <section id="servico">
         <h2>O que o PetMotion faz</h2>
-        <p>O PetMotion é um aplicativo para tutores de cães e gatos que permite:</p>
+        <p>O PetMotion é um aplicativo para quem cuida de cães e gatos que permite:</p>
         <ul>
             <li>registrar passeios com o caminho no mapa, tempo, distância e passos;</li>
             <li>marcar onde o pet fez xixi, cocô ou bebeu água;</li>
@@ -50,7 +50,7 @@
         <ul>
             <li><strong>Asfalto quente</strong>: a temperatura do chão é uma estimativa feita a partir do clima da sua região, e o chão real pode estar mais quente ou mais frio. Antes de sair, encoste a mão no chão por alguns segundos e evite os horários de sol forte.</li>
             <li><strong>Metas de passeio</strong>: a meta diária é escolhida por você. A quantidade ideal de exercício depende da raça, da idade e da saúde do pet, então converse com o veterinário.</li>
-            <li><strong>Lembretes de saúde</strong>: dependem das datas que você registra e das notificações estarem ativas no celular. Eles ajudam, mas a responsabilidade pelo calendário de vacinas e remédios continua sendo do tutor.</li>
+            <li><strong>Lembretes de saúde</strong>: dependem das datas que você registra e das notificações estarem ativas no celular. Eles ajudam, mas a responsabilidade pelo calendário de vacinas e remédios continua sendo de quem cuida do pet.</li>
             <li>Em caso de emergência, procure imediatamente um veterinário.</li>
         </ul>
     </section>
@@ -96,7 +96,7 @@
         <p>Não somos responsáveis por:</p>
         <ul>
             <li>decisões sobre a saúde do pet tomadas só com base no app, sem orientação veterinária;</li>
-            <li>acidentes durante o passeio, que é feito sob a guarda e a responsabilidade do tutor;</li>
+            <li>acidentes durante o passeio, que é feito sob a guarda e a responsabilidade de quem cadastrou o pet e de quem o passeia;</li>
             <li>problemas causados por celular sem bateria, sem sinal, com permissões desativadas ou com sistema desatualizado;</li>
             <li>o conteúdo e as políticas de apps de terceiros para onde você compartilha seus passeios.</li>
         </ul>

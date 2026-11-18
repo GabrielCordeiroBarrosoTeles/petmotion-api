@@ -61,8 +61,9 @@ services:
     depends_on:
       petmotion-php:
         condition: service_healthy
+      # só precisa existir: se o Reverb cair, o site e a API continuam no ar
       petmotion-reverb:
-        condition: service_healthy
+        condition: service_started
     networks: [interno, tolembrado]
 
 networks:

@@ -32,6 +32,8 @@ class DatabaseSeeder extends Seeder
             ['Lucas Lima', 'lucas@petmotion.app', [['Bidu', 'dog', 'Beagle', 11.8, 35, null], ['Nina', 'cat', 'Siamês', 4.0, 10, null]]],
         ];
 
+        $thor = null;
+
         foreach ($tutors as [$name, $email, $pets]) {
             $user = User::create(['name' => $name, 'email' => $email, 'password' => 'petmotion']);
             if ($email === 'gabriel@petmotion.app') {
@@ -54,6 +56,10 @@ class DatabaseSeeder extends Seeder
                     'photo_path' => $photo,
                 ]);
 
+                if ($petName === 'Thor') {
+                    $thor = $pet;
+                }
+
                 $this->seedHealth($pet);
 
                 if ($species === 'dog') {
@@ -61,6 +67,33 @@ class DatabaseSeeder extends Seeder
                 }
             }
         }
+
+        $this->seedWalker($thor);
+    }
+
+    /** Passeador demo: João passeia com o Thor do Gabriel e já fez um passeio hoje. */
+    private function seedWalker(Pet $thor): void
+    {
+        $joao = User::create(['name' => 'João Passeador', 'email' => 'joao@passeador.app', 'password' => 'petmotion']);
+        $thor->walkers()->attach($joao->id);
+
+        $start = now()->subMinutes(50);
+        $points = $this->route(20);
+        $distance = $this->distance($points);
+
+        $walk = $joao->walks()->create([
+            'pet_id' => $thor->id,
+            'started_at' => $start,
+            'ended_at' => $start->copy()->addMinutes(20),
+            'duration_seconds' => 20 * 60,
+            'distance_meters' => $distance,
+            'steps' => (int) ($distance * 1.35),
+            'temperature_c' => 24,
+            'points' => $points,
+        ]);
+
+        [$lat, $lng] = $points[intdiv(count($points), 2)];
+        $walk->events()->create(['type' => 'pee', 'lat' => $lat, 'lng' => $lng, 'occurred_at' => $start->copy()->addMinutes(8)]);
     }
 
     private function seedWalks(User $user, Pet $pet): void
