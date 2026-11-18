@@ -17,12 +17,14 @@ class WalkController extends Controller
     {
         $user = $request->user();
         $petId = $request->integer('pet_id');
-        $query = $user->walks()->whereIn('pet_id', Pet::accessibleBy($user)->select('pets.id'));
+        // visível: passeio de pet que é meu, ou que eu fiz enquanto ainda passeio o pet
+        $query = Walk::query()->where(fn ($q) => $q
+            ->whereIn('pet_id', $user->pets()->select('pets.id'))
+            ->orWhere(fn ($q) => $q->where('user_id', $user->id)
+                ->whereIn('pet_id', Pet::accessibleBy($user)->select('pets.id'))));
 
         if ($petId) {
-            $pet = Pet::accessibleBy($user)->findOrFail($petId);
-            // o dono vê os passeios de todo mundo; o passeador só os dele
-            $query = $pet->isOwnedBy($user) ? $pet->walks() : $query->where('pet_id', $pet->id);
+            $query->where('pet_id', Pet::accessibleBy($user)->findOrFail($petId)->id);
         }
 
         $walks = $query

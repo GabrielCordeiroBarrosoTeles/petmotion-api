@@ -212,7 +212,7 @@ class WalkerAccessTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->deleteJson("/api/walks/{$walkId}", [], $this->bearer($walker))->assertNotFound();
         $this->app['auth']->forgetGuards();
-        $this->getJson('/api/walks', $this->bearer($owner))->assertJsonCount(0, 'data');
+        $this->getJson('/api/walks', $this->bearer($owner))->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $walkId);
         $this->getJson("/api/walks?pet_id={$pet->id}", $this->bearer($owner))->assertJsonCount(1, 'data');
         $this->getJson("/api/walks/{$walkId}", $this->bearer($owner))->assertOk();
     }
