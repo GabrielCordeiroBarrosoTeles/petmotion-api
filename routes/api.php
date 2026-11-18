@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HealthRecordController;
 use App\Http\Controllers\Api\InviteController;
+use App\Http\Controllers\Api\LiveWalkController;
 use App\Http\Controllers\Api\PetController;
 use App\Http\Controllers\Api\PremiumController;
 use App\Http\Controllers\Api\StatsController;
@@ -36,6 +37,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/invites/{code}/accept', [InviteController::class, 'accept']);
     Route::get('/pets/{pet}/walkers', [WalkerController::class, 'index']);
     Route::delete('/pets/{pet}/walkers/{user}', [WalkerController::class, 'destroy']);
+
+    Route::post('/live/start', [LiveWalkController::class, 'start']);
+    Route::post('/live/{session}/progress', [LiveWalkController::class, 'progress']);
+    Route::post('/live/{session}/finish', [LiveWalkController::class, 'finish']);
+    Route::post('/live/{session}/cancel', [LiveWalkController::class, 'cancel']);
+    Route::get('/pets/{pet}/live', [LiveWalkController::class, 'show']);
 
     Route::apiResource('walks', WalkController::class)->except('update');
 

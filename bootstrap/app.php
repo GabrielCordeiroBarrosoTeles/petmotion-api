@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // auth do canal privado em POST /api/broadcasting/auth com o mesmo Bearer do app
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api', 'middleware' => ['auth:sanctum']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn () => route('monitor.login'));
         // Em produção a requisição chega pelo túnel da Cloudflare → nginx (rede interna do Docker):
