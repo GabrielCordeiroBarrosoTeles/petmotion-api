@@ -67,8 +67,8 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['password' => 'Senha incorreta.']);
         }
 
-        $photos = $user->pets()->whereNotNull('photo_path')->pluck('photo_path')
-            ->reject(fn ($path) => str_starts_with($path, 'http'));
+        // só uploads saem do disco: link externo e foto de demonstração ficam
+        $photos = $user->pets->push($user)->filter->hasStoredPhoto()->pluck('photo_path');
 
         DB::transaction(function () use ($user) {
             $user->tokens()->delete();

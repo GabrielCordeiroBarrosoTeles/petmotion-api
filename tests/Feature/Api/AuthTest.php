@@ -93,6 +93,10 @@ class AuthTest extends TestCase
         $local = UploadedFile::fake()->image('thor.jpg')->store('pets', 'public');
         $pet = $this->makePet($user, ['photo_path' => $local]);
         $this->makePet($user, ['name' => 'Mel', 'photo_path' => 'https://cdn.example.com/mel.jpg']);
+        $this->makePet($user, ['name' => 'Bidu', 'photo_path' => 'seed/bidu.jpg']);
+        Storage::disk('public')->put('seed/bidu.jpg', 'x'); // mesmo nome no disco: a foto de demonstração não pode ser apagada
+        $avatar = UploadedFile::fake()->image('eu.jpg')->store('users', 'public');
+        $user->forceFill(['photo_path' => $avatar])->save();
         $this->makeWalk($pet, now()->subHour());
         $this->makeHealth($pet);
 
@@ -103,6 +107,20 @@ class AuthTest extends TestCase
         $this->assertDatabaseCount('walks', 0);
         $this->assertDatabaseCount('health_records', 0);
         $this->assertDatabaseCount('personal_access_tokens', 0);
-        Storage::disk('public')->assertMissing($local);
+        Storage::disk('public')->assertMissing([$local, $avatar]);
+        Storage::disk('public')->assertExists('seed/bidu.jpg');
+    }
+
+    public function test_me_returns_photo_url_from_upload_seed_or_none(): void
+    {
+        $expected = [null => null, 'seed/gabriel.jpg' => url('seed/gabriel.jpg'), 'users/eu.jpg' => url('/storage/users/eu.jpg')];
+
+        foreach ($expected as $path => $url) {
+            $user = $this->makeUser();
+            $user->forceFill(['photo_path' => $path ?: null])->save();
+            $this->app['auth']->forgetGuards(); // cada usuário numa sessão nova
+
+            $this->getJson('/api/me', $this->bearer($user))->assertJsonPath('photo_url', $url)->assertJsonMissingPath('photo_path');
+        }
     }
 }

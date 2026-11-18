@@ -58,6 +58,49 @@ class WalkTest extends TestCase
         $this->assertDatabaseCount('walks', 0);
     }
 
+    public function test_store_group_walk_saves_one_walk_per_pet_with_same_route_and_events(): void
+    {
+        $me = $this->makeUser();
+        $thor = $this->makePet($me);
+        $mel = $this->makePet($me, ['name' => 'Mel']);
+
+        $res = $this->postJson('/api/walks', $this->payload($thor->id, ['companion_ids' => [$mel->id, $thor->id]]), $this->bearer($me))
+            ->assertCreated()
+            ->assertJsonPath('pet.name', 'Thor')
+            ->assertJsonCount(1, 'companions')
+            ->assertJsonPath('companions.0.name', 'Mel');
+
+        $this->assertDatabaseCount('walks', 2);
+        $this->assertDatabaseCount('walk_events', 2);
+        $melWalk = $mel->walks()->sole();
+        $this->assertSame($res->json('group_id'), $melWalk->group_id);
+        $this->assertSame(700, $melWalk->distance_meters);
+
+        // o detalhe do passeio da Mel mostra o Thor como companheiro
+        $this->getJson("/api/walks/{$melWalk->id}", $this->bearer($me))->assertJsonPath('companions.0.name', 'Thor');
+    }
+
+    public function test_store_alone_has_no_group_nor_companions(): void
+    {
+        $me = $this->makeUser();
+        $pet = $this->makePet($me);
+
+        $this->postJson('/api/walks', $this->payload($pet->id, ['companion_ids' => []]), $this->bearer($me))
+            ->assertCreated()
+            ->assertJsonPath('group_id', null)
+            ->assertJsonCount(0, 'companions');
+    }
+
+    public function test_store_group_rejects_companion_of_another_user(): void
+    {
+        $me = $this->makeUser();
+        $pet = $this->makePet($me);
+        $other = $this->makePet($this->makeUser(), ['name' => 'Alheio']);
+
+        $this->postJson('/api/walks', $this->payload($pet->id, ['companion_ids' => [$other->id]]), $this->bearer($me))->assertNotFound();
+        $this->assertDatabaseCount('walks', 0);
+    }
+
     public function test_store_validates_payload(): void
     {
         $me = $this->makeUser();

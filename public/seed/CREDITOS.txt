@@ -1,0 +1,7 @@
+Fotos de demonstração usadas no seed (contas demo do PetMotion):
+
+thor.jpg    "Golden Retriever Dukedestiny01 drvd.jpg", Wikimedia Commons, domínio público.
+mel.jpg     "Caramelo dog 59.jpg", Wikimedia Commons, domínio público.
+gabriel.jpg "Man 2.jpg", Wikimedia Commons, domínio público. Rosto gerado por IA (StyleGAN): a pessoa não existe.
+
+Recortadas e reduzidas para avatar.

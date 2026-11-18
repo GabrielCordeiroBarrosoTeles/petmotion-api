@@ -89,6 +89,19 @@ class PetTest extends TestCase
         $this->assertCount(1, Storage::disk('public')->files('pets'));
     }
 
+    public function test_demo_photo_is_served_from_public_seed_and_kept_on_replace(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('seed/thor.jpg', 'x');
+        $me = $this->makeUser();
+        $pet = $this->makePet($me, ['photo_path' => 'seed/thor.jpg']);
+
+        $this->getJson("/api/pets/{$pet->id}", $this->bearer($me))->assertJsonPath('photo_url', url('seed/thor.jpg'));
+
+        $this->putJson("/api/pets/{$pet->id}", ['photo' => UploadedFile::fake()->image('n.jpg')], $this->bearer($me))->assertOk();
+        Storage::disk('public')->assertExists('seed/thor.jpg');
+    }
+
     public function test_update_of_other_users_pet_is_not_found(): void
     {
         $pet = $this->makePet($this->makeUser());

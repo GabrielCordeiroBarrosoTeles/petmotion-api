@@ -75,7 +75,7 @@ class PetController extends Controller
             return;
         }
 
-        if ($pet->photo_path && ! str_starts_with($pet->photo_path, 'http')) {
+        if ($pet->hasStoredPhoto()) {
             Storage::disk('public')->delete($pet->photo_path);
         }
 

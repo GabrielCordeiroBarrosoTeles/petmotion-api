@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPhoto;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -12,18 +13,18 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token', 'is_admin', 'trial_started_at'])]
+#[Hidden(['password', 'remember_token', 'is_admin', 'trial_started_at', 'photo_path'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasPhoto, Notifiable;
 
     /** Plano grátis: quantos pets cabem sem a Matilha. */
     public const FREE_PET_LIMIT = 1;
 
     public const TRIAL_DAYS = 7;
 
-    protected $appends = ['is_premium', 'trial_available'];
+    protected $appends = ['is_premium', 'trial_available', 'photo_url'];
 
     protected function casts(): array
     {

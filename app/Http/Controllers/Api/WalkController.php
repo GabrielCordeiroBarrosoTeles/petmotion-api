@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class WalkController extends Controller
 {
@@ -26,6 +27,8 @@ class WalkController extends Controller
     {
         $data = $request->validate([
             'pet_id' => ['required', 'integer'],
+            'companion_ids' => ['sometimes', 'array', 'max:10'],
+            'companion_ids.*' => ['integer', 'distinct'],
             'started_at' => ['required', 'date'],
             'ended_at' => ['required', 'date', 'after_or_equal:started_at'],
             'duration_seconds' => ['required', 'integer', 'min:1'],
@@ -42,7 +45,11 @@ class WalkController extends Controller
             'events.*.occurred_at' => ['required', 'date'],
         ]);
 
-        abort_unless($request->user()->pets()->whereKey($data['pet_id'])->exists(), 404);
+        // passeio em grupo: o mesmo trajeto vira um registro por pet, então meta e conquistas de cada um seguem certas
+        $petIds = array_values(array_unique([$data['pet_id'], ...($data['companion_ids'] ?? [])]));
+        abort_unless($request->user()->pets()->whereKey($petIds)->count() === count($petIds), 404);
+        unset($data['companion_ids']);
+        $data['group_id'] = count($petIds) > 1 ? (string) Str::uuid() : null;
 
         $tz = config('app.timezone');
         $data['started_at'] = Carbon::parse($data['started_at'])->setTimezone($tz);
@@ -52,21 +59,25 @@ class WalkController extends Controller
             $data['events'] ?? [],
         );
 
-        $walk = DB::transaction(function () use ($request, $data) {
-            $walk = $request->user()->walks()->create($data);
-            $walk->events()->createMany($data['events'] ?? []);
+        $walk = DB::transaction(function () use ($request, $data, $petIds) {
+            $walks = array_map(function ($petId) use ($request, $data) {
+                $walk = $request->user()->walks()->create(['pet_id' => $petId] + $data);
+                $walk->events()->createMany($data['events']);
 
-            return $walk;
+                return $walk;
+            }, $petIds);
+
+            return $walks[0];
         });
 
-        return response()->json($walk->load('events', 'pet'), 201);
+        return response()->json($walk->withDetails(), 201);
     }
 
     public function show(Request $request, Walk $walk): JsonResponse
     {
         abort_unless($walk->user_id === $request->user()->id, 404);
 
-        return response()->json($walk->load('events', 'pet'));
+        return response()->json($walk->withDetails());
     }
 
     public function destroy(Request $request, Walk $walk): JsonResponse

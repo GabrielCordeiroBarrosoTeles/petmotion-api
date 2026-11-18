@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPhoto;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 class Pet extends Model
 {
+    use HasPhoto;
+
     protected $fillable = [
         'name', 'species', 'breed', 'birth_date', 'weight_kg', 'daily_goal_minutes', 'photo_path',
     ];
@@ -24,17 +26,6 @@ class Pet extends Model
             'weight_kg' => 'float',
             'daily_goal_minutes' => 'integer',
         ];
-    }
-
-    public function getPhotoUrlAttribute(): ?string
-    {
-        if (! $this->photo_path) {
-            return null;
-        }
-
-        return str_starts_with($this->photo_path, 'http')
-            ? $this->photo_path
-            : url(Storage::url($this->photo_path));
     }
 
     public function user(): BelongsTo

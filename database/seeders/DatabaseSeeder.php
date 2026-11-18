@@ -21,25 +21,28 @@ class DatabaseSeeder extends Seeder
         $admin = User::create(['name' => 'Admin', 'email' => 'admin@petmotion.app', 'password' => $adminPassword ?: 'petmotion']);
         $admin->forceFill(['is_admin' => true])->save();
 
-        // Acessos pedidos pelo Gabriel: cliente (app) e suporte (monitor)
-        User::create(['name' => 'Cordeiro Cliente', 'email' => 'cordeiro@cliente.com', 'password' => '12345678']);
+        // Acesso pedido pelo Gabriel: suporte (monitor)
         User::create(['name' => 'Cordeiro Suporte', 'email' => 'cordeiro@suporte.com', 'password' => $adminPassword ?: '12345678'])
             ->forceFill(['is_admin' => true])->save();
 
         $tutors = [
-            ['Gabriel Cordeiro', 'gabriel@petmotion.app', [['Thor', 'dog', 'Golden Retriever', 32.4, 40], ['Mel', 'dog', 'Vira-lata caramelo', 14.1, 30]]],
-            ['Ana Souza', 'ana@petmotion.app', [['Pipoca', 'dog', 'Shih-tzu', 6.2, 20]]],
-            ['Lucas Lima', 'lucas@petmotion.app', [['Bidu', 'dog', 'Beagle', 11.8, 35], ['Nina', 'cat', 'Siamês', 4.0, 10]]],
+            ['Gabriel Cordeiro', 'gabriel@petmotion.app', [['Thor', 'dog', 'Golden Retriever', 32.4, 40, 'seed/thor.jpg'], ['Mel', 'dog', 'Vira-lata caramelo', 14.1, 30, 'seed/mel.jpg']]],
+            ['Ana Souza', 'ana@petmotion.app', [['Pipoca', 'dog', 'Shih-tzu', 6.2, 20, null]]],
+            ['Lucas Lima', 'lucas@petmotion.app', [['Bidu', 'dog', 'Beagle', 11.8, 35, null], ['Nina', 'cat', 'Siamês', 4.0, 10, null]]],
         ];
 
         foreach ($tutors as [$name, $email, $pets]) {
             $user = User::create(['name' => $name, 'email' => $email, 'password' => 'petmotion']);
             if ($email === 'gabriel@petmotion.app') {
-                // conta demo completa já é da Matilha (o cordeiro@cliente fica no grátis para mostrar o fluxo)
-                $user->forceFill(['premium_until' => now()->addDays(30), 'trial_started_at' => now()->subDays(10)])->save();
+                // conta demo completa: da Matilha e com foto (rosto gerado por IA, não é uma pessoa real)
+                $user->forceFill([
+                    'premium_until' => now()->addDays(30),
+                    'trial_started_at' => now()->subDays(10),
+                    'photo_path' => 'seed/gabriel.jpg',
+                ])->save();
             }
 
-            foreach ($pets as [$petName, $species, $breed, $weight, $goal]) {
+            foreach ($pets as [$petName, $species, $breed, $weight, $goal, $photo]) {
                 $pet = $user->pets()->create([
                     'name' => $petName,
                     'species' => $species,
@@ -47,6 +50,7 @@ class DatabaseSeeder extends Seeder
                     'birth_date' => now()->subMonths(rand(10, 90))->toDateString(),
                     'weight_kg' => $weight,
                     'daily_goal_minutes' => $goal,
+                    'photo_path' => $photo,
                 ]);
 
                 $this->seedHealth($pet);
