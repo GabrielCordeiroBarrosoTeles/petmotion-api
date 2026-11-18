@@ -4,11 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pet;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class PetController extends Controller
 {
@@ -16,7 +14,7 @@ class PetController extends Controller
     {
         $user = $request->user();
         $pets = Pet::accessibleBy($user)->with('user:id,name')->orderBy('created_at')->get()
-            ->map(fn (Pet $pet) => $this->withRole($pet, $user));
+            ->map(fn (Pet $pet) => $pet->presentFor($user));
 
         return response()->json($pets);
     }
@@ -40,7 +38,7 @@ class PetController extends Controller
     {
         abort_unless($pet->canBeWalkedBy($request->user()), 404);
 
-        return response()->json($this->withRole($pet, $request->user()));
+        return response()->json($pet->presentFor($request->user()));
     }
 
     public function update(Request $request, Pet $pet): JsonResponse
@@ -91,19 +89,5 @@ class PetController extends Controller
     private function authorizePet(Request $request, Pet $pet): void
     {
         abort_unless($pet->isOwnedBy($request->user()), 404);
-    }
-
-    /** `role` e `owner_name` dependem de quem pergunta, por isso não são `$appends`. */
-    private function withRole(Pet $pet, User $user): Pet
-    {
-        if ($pet->isOwnedBy($user)) {
-            return $pet->setAttribute('role', 'owner')->unsetRelation('user');
-        }
-
-        $ownerName = Str::before($pet->user->name, ' ');
-
-        return $pet->setAttribute('role', 'walker')
-            ->setAttribute('owner_name', $ownerName)
-            ->unsetRelation('user');
     }
 }

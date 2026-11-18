@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Pet;
 use App\Models\Walk;
+use App\Services\LiveWalkStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -35,7 +36,7 @@ class WalkController extends Controller
         return response()->json($walks);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, LiveWalkStore $live): JsonResponse
     {
         $data = $request->validate([
             'pet_id' => ['required', 'integer'],
@@ -59,7 +60,7 @@ class WalkController extends Controller
 
         // passeio em grupo: o mesmo trajeto vira um registro por pet, então meta e conquistas de cada um seguem certas
         $petIds = array_values(array_unique([$data['pet_id'], ...($data['companion_ids'] ?? [])]));
-        abort_unless(Pet::accessibleBy($request->user())->whereKey($petIds)->count() === count($petIds), 404);
+        abort_unless($live->walkablePets($request->user(), $petIds)->count() === count($petIds), 404);
         unset($data['companion_ids']);
         $data['group_id'] = count($petIds) > 1 ? (string) Str::uuid() : null;
 

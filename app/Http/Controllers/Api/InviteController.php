@@ -55,7 +55,7 @@ class InviteController extends Controller
         // repetir o aceite (toque duplo, reabrir o link) não pode virar erro nem duplicar
         $used = PetInvite::where('code', strtoupper($code))->where('accepted_by', $user->id)->with('pet')->first();
         if ($used && $used->pet->walkers()->whereKey($user->id)->exists()) {
-            return response()->json($used->pet->setAttribute('role', 'walker'));
+            return response()->json($used->pet->presentFor($user));
         }
 
         $invite = $this->openInvite($code);
@@ -69,9 +69,8 @@ class InviteController extends Controller
             abort_unless($invite->claimFor($user), 404);
             $pet->walkers()->syncWithoutDetaching([$user->id]);
         });
-        $pet->setAttribute('role', 'walker');
 
-        return response()->json($pet);
+        return response()->json($pet->presentFor($user));
     }
 
     private function openInvite(string $code): PetInvite

@@ -9,7 +9,7 @@
         <ul>
             <li>Sua localização só é usada <strong>durante o passeio</strong> e para checar o clima antes de sair. O app não rastreia você em segundo plano.</li>
             <li>Os passeios, as fotos e os registros de saúde do seu pet servem para mostrar o histórico para você. <strong>Não vendemos seus dados</strong> e não mostramos anúncios.</li>
-            <li>Se você compartilhar o pet com um <strong>passeador</strong>, você vê o trajeto do passeio dele <strong>ao vivo</strong>, e ele vê só o nome e a foto do pet, nunca a saúde.</li>
+            <li>Se você compartilhar o pet com um <strong>passeador</strong>, você vê o trajeto do passeio dele <strong>ao vivo</strong>, e ele vê o perfil do pet (nome, foto, espécie, raça, nascimento, peso e meta), as estatísticas e as conquistas e o seu primeiro nome, nunca a saúde.</li>
             <li>Você pode apagar um passeio, um pet ou a <strong>sua conta inteira</strong> pelo próprio app, quando quiser.</li>
             <li>Dúvidas ou pedidos sobre seus dados: {!! $contact !!}.</li>
         </ul>
@@ -34,7 +34,7 @@
                     <tr><td><strong>Marcações do passeio</strong>: xixi, cocô e água, com o local e o horário</td><td>Quando você toca nos botões durante o passeio</td><td>Mostrar no mapa e no histórico, por exemplo para conversar com o veterinário.</td></tr>
                     <tr><td><strong>Passos</strong></td><td>Durante o passeio, pelo sensor de movimento do celular</td><td>Mostrar quantos passos vocês deram.</td></tr>
                     <tr><td><strong>Localização para o clima</strong></td><td>Ao abrir a tela inicial e antes de um passeio</td><td>Consultar a temperatura da sua região e estimar se o asfalto está quente demais.</td></tr>
-                    <tr><td><strong>Convite de passeador</strong>: um código de 8 caracteres e o vínculo entre o pet e o passeador</td><td>Quando o pai ou a mãe de pet convida alguém para passear com o pet (o convite vale 48 horas e só pode ser usado uma vez)</td><td>Permitir que o passeador veja o nome e a foto do pet e registre passeios com ele. O passeador não vê registros de saúde.</td></tr>
+                    <tr><td><strong>Convite de passeador</strong>: um código de 8 caracteres e o vínculo entre o pet e o passeador</td><td>Quando o pai ou a mãe de pet convida alguém para passear com o pet (o convite vale 48 horas e só pode ser usado uma vez)</td><td>Permitir que o passeador registre passeios com o pet e veja o perfil dele, as estatísticas e as conquistas e o primeiro nome de quem cadastrou o pet. O passeador não vê registros de saúde.</td></tr>
                     <tr><td><strong>Passeio ao vivo</strong>: posição, tempo, distância e marcações enquanto o passeio acontece</td><td>Somente durante um passeio feito por um passeador, com o app aberto</td><td>Mostrar ao pai ou à mãe do pet, em tempo real, por onde o pet está passeando. Ninguém além de quem cadastrou o pet recebe essa localização.</td></tr>
                     <tr><td><strong>Registros de saúde</strong>: vacinas, vermífugos, remédios, consultas e observações</td><td>Quando você registra um cuidado</td><td>Montar a carteirinha digital e lembrar você da próxima dose.</td></tr>
                     <tr><td><strong>Dados técnicos</strong>: endereço IP e data/hora de acesso</td><td>Em cada uso do app e do site</td><td>Segurança, prevenção de abuso e correção de erros.</td></tr>
@@ -81,8 +81,8 @@
                     <tr><td><strong>Open-Meteo</strong> (serviço de clima)</td><td>Coordenadas aproximadas da sua região</td><td>Informar a temperatura atual. Não recebe seu nome, e-mail nem dados do pet.</td></tr>
                     <tr><td><strong>Apple Maps ou Google Maps</strong></td><td>A área do mapa exibida na tela</td><td>Desenhar o mapa no celular, conforme o sistema do aparelho.</td></tr>
                     <tr><td><strong>Google Fonts e CDNs de bibliotecas</strong></td><td>Endereço IP de quem visita o site</td><td>Carregar as fontes e os recursos visuais do site.</td></tr>
-                    <tr><td><strong>Pai ou mãe do pet</strong> (quando um passeador faz o passeio)</td><td>O trajeto, o horário, a distância e as marcações do passeio, ao vivo e depois no histórico</td><td>Acompanhar o passeio do pet. Passeios feitos por você com um pet que alguém compartilhou aparecem para quem cadastrou o pet.</td></tr>
-                    <tr><td><strong>Passeador</strong> (quando você compartilha um pet)</td><td>Nome e foto do pet e os passeios que ele mesmo fez</td><td>Passear com o pet. Não recebe registros de saúde nem passeios feitos por outras pessoas.</td></tr>
+                    <tr><td><strong>Pai ou mãe do pet</strong> (quando você é o passeador)</td><td>Seu nome e o trajeto, o horário, a distância e as marcações dos passeios que você faz com o pet, ao vivo e depois no histórico</td><td>Acompanhar o passeio do pet. Os passeios que você faz com um pet que alguém compartilhou aparecem no histórico de quem cadastrou o pet.</td></tr>
+                    <tr><td><strong>Passeador</strong> (quando você compartilha um pet)</td><td>O nome, a foto, a espécie, a raça, a data de nascimento, o peso e a meta diária do pet; as estatísticas e as conquistas do pet (somando todos os passeios); o primeiro nome de quem cadastrou o pet; e os passeios que ele mesmo fez</td><td>Passear com o pet. Não recebe registros de saúde, seu e-mail nem os passeios feitos por outras pessoas.</td></tr>
                     <tr><td><strong>Provedor de hospedagem</strong></td><td>Os dados armazenados no servidor</td><td>Manter o serviço no ar, sob contrato e com dever de sigilo.</td></tr>
                     <tr><td><strong>Equipe autorizada do PetMotion</strong></td><td>Nomes, e-mails, pets e passeios, no painel interno</td><td>Suporte, segurança e acompanhamento do serviço. O acesso é restrito por senha.</td></tr>
                     <tr><td><strong>Autoridades</strong></td><td>O que for exigido</td><td>Somente mediante ordem judicial ou obrigação legal.</td></tr>
@@ -98,10 +98,10 @@
         <h2>Por quanto tempo guardamos</h2>
         <ul>
             <li><strong>Conta, pets, passeios e saúde</strong>: enquanto sua conta existir. Quando você exclui um passeio ou um pet, ele é apagado na hora.</li>
-            <li><strong>Exclusão da conta</strong>: apaga imediatamente todos os seus pets, passeios, marcações e registros de saúde.</li>
+            <li><strong>Exclusão da conta</strong>: apaga imediatamente todos os seus pets, passeios (inclusive os que você fez como passeador), marcações e registros de saúde.</li>
             <li><strong>Registros de acesso</strong>: quando a lei exigir (art. 15 do Marco Civil da Internet), guardados por 6 meses e depois descartados.</li>
             <li><strong>Passeio ao vivo</strong>: os dados em tempo real ficam guardados só de forma temporária, por até 3 horas, e 10 minutos depois que o passeio termina. Depois disso são descartados. O passeio finalizado continua no histórico até você apagá-lo.</li>
-            <li><strong>Convites</strong>: o código vale 48 horas. Você pode remover um passeador quando quiser.</li>
+            <li><strong>Convites e passeadores</strong>: o código vale 48 horas. Você pode remover um passeador quando quiser: os passeios que ele já fez continuam no histórico do pet, e um passeio que já estava em andamento ainda pode ser concluído e salvo. Se o passeador excluir a conta dele, os passeios que ele fez também são apagados, inclusive do histórico do pet.</li>
             <li><strong>Clima</strong>: a consulta fica em cache por 10 minutos, sem identificação do usuário.</li>
         </ul>
     </section>

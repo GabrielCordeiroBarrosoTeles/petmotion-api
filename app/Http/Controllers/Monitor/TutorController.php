@@ -13,7 +13,7 @@ class TutorController extends Controller
     {
         $search = trim((string) $request->query('q'));
 
-        $tutors = User::where('is_admin', false)
+        $tutors = User::petParents()
             ->withCount('pets', 'walks')
             ->withSum('walks', 'distance_meters')
             ->withMax('walks', 'started_at')

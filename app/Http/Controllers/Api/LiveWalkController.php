@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -33,7 +32,9 @@ class LiveWalkController extends Controller
     public function start(Request $request): JsonResponse
     {
         $data = $request->validate(self::PET_IDS);
-        $pets = $this->walkablePets($request, $data['pet_ids']);
+        // passeio novo só com acesso de verdade (dono ou passeador)
+        $pets = Pet::accessibleBy($request->user())->whereKey($data['pet_ids'])->orderBy('id')->get();
+        abort_unless($pets->count() === count($data['pet_ids']), 404);
         $session = (string) Str::uuid();
         $now = now()->toIso8601String();
 
@@ -132,15 +133,6 @@ class LiveWalkController extends Controller
         return $state ? response()->json($state) : response()->noContent();
     }
 
-    /** @return Collection<int, Pet> */
-    private function walkablePets(Request $request, array $petIds): Collection
-    {
-        $pets = Pet::accessibleBy($request->user())->whereKey($petIds)->orderBy('id')->get();
-        abort_unless($pets->count() === count($petIds), 404);
-
-        return $pets;
-    }
-
     /**
      * Estados dos pets nesta sessão. Outra sessão (mais nova), nenhuma, ou já finalizada (progresso ou
      * cancelamento atrasado não pode ressuscitar nem apagar o passeio pronto): 409, sem mexer em nada.
@@ -149,8 +141,11 @@ class LiveWalkController extends Controller
      */
     private function currentStates(Request $request, array $petIds, string $session, bool $allowFinished = false): array
     {
+        $pets = $this->store->walkablePets($request->user(), $petIds, $allowFinished);
+        abort_unless($pets->count() === count($petIds), 404);
+
         $states = [];
-        foreach ($this->walkablePets($request, $petIds) as $pet) {
+        foreach ($pets as $pet) {
             $state = $this->store->get($pet->id);
             abort_unless(($state['session'] ?? null) === $session && ($allowFinished || $state['status'] !== 'finished'), 409);
             $states[$pet->id] = $state;

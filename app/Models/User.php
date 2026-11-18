@@ -6,6 +6,7 @@ use App\Models\Concerns\HasPhoto;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -68,5 +69,12 @@ class User extends Authenticatable
     public function walkingPets(): BelongsToMany
     {
         return $this->belongsToMany(Pet::class, 'pet_walkers')->withTimestamps();
+    }
+
+    /** Pais de pet para o monitor: sem admins e sem quem só passeia pets dos outros (conta nova sem pet entra). */
+    public function scopePetParents(Builder $query): Builder
+    {
+        return $query->where('is_admin', false)
+            ->where(fn (Builder $q) => $q->has('pets')->orWhereDoesntHave('walkingPets'));
     }
 }

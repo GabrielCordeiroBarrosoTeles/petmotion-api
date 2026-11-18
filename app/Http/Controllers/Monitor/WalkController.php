@@ -24,7 +24,7 @@ class WalkController extends Controller
             'all' => null,
         };
 
-        $query = Walk::with('pet:id,name,species', 'user:id,name')
+        $query = Walk::with('pet:id,name,species,user_id', 'pet.user:id,name', 'user:id,name')
             ->withCount('events')
             ->when($since, fn ($q) => $q->where('started_at', '>=', $since))
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w

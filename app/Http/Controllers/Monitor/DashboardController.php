@@ -27,7 +27,7 @@ class DashboardController extends Controller
         $kmWeek = Walk::where('started_at', '>=', $weekStart)->sum('distance_meters') / 1000;
         $kmPrevWeek = Walk::whereBetween('started_at', [$prevWeekStart, $weekStart])->sum('distance_meters') / 1000;
 
-        $recentWalks = Walk::with('pet:id,name', 'user:id,name')->withCount('events')->latest('started_at')->limit(25)->get();
+        $recentWalks = Walk::with('pet:id,name,user_id', 'pet.user:id,name', 'user:id,name')->withCount('events')->latest('started_at')->limit(25)->get();
 
         return view('monitor.dashboard', [
             'kpis' => [
@@ -36,7 +36,7 @@ class DashboardController extends Controller
                 'kmTrend' => $kmPrevWeek > 0 ? (int) round(($kmWeek - $kmPrevWeek) / $kmPrevWeek * 100) : null,
                 'activePets' => Walk::where('started_at', '>=', $weekStart)->distinct('pet_id')->count('pet_id'),
                 'pets' => Pet::count(),
-                'tutors' => User::where('is_admin', false)->count(),
+                'tutors' => User::petParents()->count(),
                 'premium' => User::where('is_admin', false)->where('premium_until', '>', now())->count(),
                 'lateHealth' => HealthRecord::overdue()->count(),
             ],

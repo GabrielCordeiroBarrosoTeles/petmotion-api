@@ -43,8 +43,10 @@ return [
                 'scheme' => env('REVERB_PUBLISH_SCHEME', env('REVERB_SCHEME', 'https')),
                 'useTLS' => env('REVERB_PUBLISH_SCHEME', env('REVERB_SCHEME', 'https')) === 'https',
             ],
+            // Reverb fora do ar não pode segurar o pedido do app: desiste rápido (o estado já está no cache)
             'client_options' => [
-                // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                'connect_timeout' => (float) env('REVERB_CONNECT_TIMEOUT', 1),
+                'timeout' => (float) env('REVERB_TIMEOUT', 2),
             ],
         ],
 

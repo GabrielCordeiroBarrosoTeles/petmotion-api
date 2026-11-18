@@ -379,6 +379,83 @@ class LiveWalkTest extends TestCase
         $this->assertSame(['Bidu'], $this->getJson("/api/pets/{$bidu->id}/live", $this->as($carlos))->json('pet_names'));
     }
 
+    private function walkPayload(int $petId): array
+    {
+        return [
+            'pet_id' => $petId,
+            'started_at' => now()->subMinutes(10)->toIso8601String(),
+            'ended_at' => now()->toIso8601String(),
+            'duration_seconds' => 600,
+            'distance_meters' => 700,
+            'points' => [[-23.58, -46.65], [-23.581, -46.651]],
+        ];
+    }
+
+    public function test_removed_walker_mid_walk_still_saves(): void
+    {
+        $ana = $this->makeUser();
+        $thor = $this->makePet($ana);
+        $walker = $this->makeWalker($thor);
+        $session = $this->start($walker, [$thor->id]);
+
+        // o dono tira o passeador no meio do passeio: o passeio em andamento segue até o fim
+        $this->deleteJson("/api/pets/{$thor->id}/walkers/{$walker->id}", [], $this->as($ana))->assertNoContent();
+
+        $this->postJson("/api/live/{$session}/progress", $this->progress(['pet_ids' => [$thor->id], 'status' => 'paused']), $this->as($walker))
+            ->assertNoContent();
+        $this->postJson("/api/live/{$session}/progress", $this->progress(['pet_ids' => [$thor->id]]), $this->as($walker))
+            ->assertNoContent();
+        $walkId = $this->postJson('/api/walks', $this->walkPayload($thor->id), $this->as($walker))->assertCreated()->json('id');
+        $this->postJson("/api/live/{$session}/finish", ['walks' => [['pet_id' => $thor->id, 'walk_id' => $walkId]]], $this->as($walker))
+            ->assertNoContent();
+        // repetir o fim (rede caiu na resposta) continua valendo
+        $this->postJson("/api/live/{$session}/finish", ['walks' => [['pet_id' => $thor->id, 'walk_id' => $walkId]]], $this->as($walker))
+            ->assertNoContent();
+
+        $state = $this->getJson("/api/pets/{$thor->id}/live", $this->as($ana))->assertOk()->json();
+        $this->assertSame('finished', $state['status']);
+        $this->assertSame($walkId, $state['walk_id']);
+        $this->getJson("/api/walks/{$walkId}", $this->as($ana))->assertOk();
+
+        // passeio novo, não: depois de finalizado o acesso acabou de vez
+        $this->postJson('/api/live/start', ['pet_ids' => [$thor->id]], $this->as($walker))->assertNotFound();
+        $this->postJson('/api/walks', $this->walkPayload($thor->id), $this->as($walker))->assertNotFound();
+        $this->assertSame(1, $thor->walks()->count());
+    }
+
+    public function test_removed_walker_can_cancel_the_walk_in_progress(): void
+    {
+        $ana = $this->makeUser();
+        $thor = $this->makePet($ana);
+        $walker = $this->makeWalker($thor);
+        $session = $this->start($walker, [$thor->id]);
+        $thor->walkers()->detach($walker->id);
+
+        // nem um passeio novo enquanto o antigo ainda está no ar
+        $this->postJson('/api/live/start', ['pet_ids' => [$thor->id]], $this->as($walker))->assertNotFound();
+
+        $this->postJson("/api/live/{$session}/cancel", ['pet_ids' => [$thor->id]], $this->as($walker))->assertNoContent();
+        $this->assertNull(app(LiveWalkStore::class)->get($thor->id));
+    }
+
+    public function test_removed_walker_without_live_session_gets_404(): void
+    {
+        $ana = $this->makeUser();
+        $thor = $this->makePet($ana);
+        $walker = $this->makeWalker($thor);
+        $other = $this->makeWalker($thor);
+        $thor->walkers()->detach($walker->id);
+
+        $this->postJson('/api/walks', $this->walkPayload($thor->id), $this->as($walker))->assertNotFound();
+        $this->postJson('/api/live/start', ['pet_ids' => [$thor->id]], $this->as($walker))->assertNotFound();
+
+        // o passeio ao vivo de outra pessoa não dá acesso a quem foi removido
+        $session = $this->start($other, [$thor->id]);
+        $this->postJson('/api/walks', $this->walkPayload($thor->id), $this->as($walker))->assertNotFound();
+        $this->postJson("/api/live/{$session}/progress", $this->progress(['pet_ids' => [$thor->id]]), $this->as($walker))->assertNotFound();
+        $this->assertDatabaseCount('walks', 0);
+    }
+
     public function test_stranger_gets_404_everywhere(): void
     {
         $ana = $this->makeUser();

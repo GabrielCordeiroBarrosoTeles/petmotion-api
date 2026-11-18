@@ -49,7 +49,16 @@ class LegalTest extends TestCase
             ->assertSee('Passeio ao vivo')
             ->assertSee('48 horas')
             ->assertSee('por até 3 horas')
-            ->assertSee('Passeador');
+            ->assertSee('Passeador')
+            // o que o passeador vê de verdade (PetController, StatsController e o aceite do convite)
+            ->assertSee('a espécie, a raça, a data de nascimento, o peso e a meta diária')
+            ->assertSee('as estatísticas e as conquistas')
+            ->assertSee('o primeiro nome de quem cadastrou o pet')
+            ->assertDontSee('só o nome e a foto')
+            ->assertSee('Pai ou mãe do pet</strong> (quando você é o passeador)', false)
+            // walks.user_id em cascata: a conta do passeador leva os passeios dele
+            ->assertSee('os passeios que ele fez também são apagados, inclusive do histórico do pet')
+            ->assertSee('os passeios que ele já fez continuam no histórico do pet');
     }
 
     public function test_terms_use_neutral_wording_for_the_owner(): void

@@ -105,7 +105,12 @@
             @forelse ($recentWalks as $walk)
                 <tr class="link" data-href="{{ route('monitor.walks.show', $walk) }}">
                     <td><a href="{{ route('monitor.walks.show', $walk) }}">{{ $walk->pet->name }}</a></td>
-                    <td>{{ $walk->user->name }}</td>
+                    <td>
+                        {{ $walk->pet->user->name }}
+                        @if ($walk->user_id !== $walk->pet->user_id)
+                            <small class="muted">com {{ $walk->user->name }}</small>
+                        @endif
+                    </td>
                     <td class="muted">{{ $walk->started_at->diffForHumans() }}</td>
                     <td class="num">{{ intdiv($walk->duration_seconds, 60) }} min</td>
                     <td class="num">{{ number_format($walk->distance_meters / 1000, 2, ',', '.') }} km</td>

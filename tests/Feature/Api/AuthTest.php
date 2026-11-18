@@ -111,6 +111,26 @@ class AuthTest extends TestCase
         Storage::disk('public')->assertExists('seed/bidu.jpg');
     }
 
+    public function test_walker_deleting_account_takes_their_walks_out_of_the_pet_history(): void
+    {
+        // é o que a política de privacidade promete: passeio feito pelo passeador sai junto com a conta dele
+        $owner = $this->makeUser();
+        $pet = $this->makePet($owner);
+        $walker = $this->makeWalker($pet);
+        $walker->forceFill(['password' => 'petmotion'])->save();
+        $ownWalk = $this->makeWalk($pet, now()->subHours(2));
+        $walker->walks()->create([
+            'pet_id' => $pet->id, 'started_at' => now()->subHour(), 'ended_at' => now(), 'duration_seconds' => 600,
+            'distance_meters' => 700, 'points' => [[-23.58, -46.65]],
+        ]);
+
+        $this->deleteJson('/api/me', ['password' => 'petmotion'], $this->bearer($walker))->assertNoContent();
+
+        $this->assertSame([$ownWalk->id], $pet->walks()->pluck('id')->all());
+        $this->assertDatabaseHas('pets', ['id' => $pet->id]);
+        $this->assertDatabaseCount('pet_walkers', 0);
+    }
+
     public function test_me_returns_photo_url_from_upload_seed_or_none(): void
     {
         $expected = [null => null, 'seed/gabriel.jpg' => url('seed/gabriel.jpg'), 'users/eu.jpg' => url('/storage/users/eu.jpg')];

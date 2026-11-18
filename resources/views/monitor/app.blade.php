@@ -107,6 +107,7 @@
     td a { text-decoration: none; font-weight: 800; }
     td a:hover { text-decoration: underline; text-decoration-color: var(--ball-deep); text-decoration-thickness: 2px; }
     .muted { color: var(--muted); }
+    td small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; }
 
     .who { display: flex; align-items: center; gap: 12px; }
     .avatar {

@@ -309,4 +309,47 @@ class MonitorTest extends TestCase
             ->assertOk()->assertSee('Passeador')->assertSee('Joao Passeador')->assertSee('Dona Maria');
         $this->get(route('monitor.walks.show', $byOwner))->assertOk()->assertDontSee('Passeador')->assertSee('Dona Maria');
     }
+
+    public function test_walk_lists_show_the_pet_parent_and_the_walker_under_it(): void
+    {
+        $owner = $this->makeUser(['name' => 'Dona Maria']);
+        $pet = $this->makePet($owner, ['name' => 'Thor']);
+        $walker = $this->makeWalker($pet);
+        $walker->update(['name' => 'Joao Passeador']);
+        $walker->walks()->create([
+            'pet_id' => $pet->id, 'started_at' => now()->subHour(), 'ended_at' => now(), 'duration_seconds' => 1800,
+            'distance_meters' => 1500, 'steps' => 1900, 'points' => [[-23.58, -46.65]],
+        ]);
+
+        $this->actingAs($this->makeAdmin());
+        foreach (['/monitor/passeios', '/monitor'] as $page) {
+            // a coluna "Pai/mãe de pet" mostra quem cadastrou o pet; quem passeou vem embaixo
+            $this->get($page)->assertOk()->assertSeeTextInOrder(['Dona Maria', 'com Joao Passeador']);
+        }
+
+        $this->makeWalk($pet, now()->subHours(3));
+        $this->get('/monitor/passeios')->assertSeeText('com Joao Passeador')->assertDontSeeText('com Dona Maria');
+    }
+
+    public function test_pais_de_pet_list_leaves_out_pure_walkers(): void
+    {
+        $admin = $this->makeAdmin();
+        $pet = $this->makePet($this->makeUser(['name' => 'Dona Maria']), ['name' => 'Thor']);
+        $walker = $this->makeWalker($pet);
+        $walker->update(['name' => 'Joao Passeador']);
+        $both = $this->makeWalker($pet);
+        $both->update(['name' => 'Carla Ambos']);
+        $this->makePet($both, ['name' => 'Bidu']);
+        $this->makeUser(['name' => 'Recem Chegado']);
+
+        $this->actingAs($admin)->get('/monitor/tutores')
+            ->assertOk()->assertSee('Dona Maria')->assertSee('Carla Ambos')->assertSee('Recem Chegado')
+            ->assertDontSee('Joao Passeador');
+        $this->get('/monitor/tutores?q=Joao')->assertSee('Ninguém encontrado.');
+        // os totais contam do mesmo jeito: Maria, Carla e quem acabou de chegar
+        $this->get('/monitor')->assertSee('<strong>3</strong>', false)->assertSee('pais de pet e 2 pets');
+        $this->get('/monitor/sistema')->assertSee('<dt>Pais de pet</dt><dd>3</dd>', false);
+        // o perfil de quem só passeia continua aberto (o link sai do passeio)
+        $this->get(route('monitor.tutors.show', $walker))->assertOk()->assertSee('Joao Passeador');
+    }
 }

@@ -109,6 +109,27 @@ class InviteTest extends TestCase
         $this->postJson("/api/invites/{$invite->code}/accept", [], $this->bearer($this->makeUser()))->assertNotFound();
     }
 
+    public function test_accept_returns_pet_without_owner_data(): void
+    {
+        $owner = $this->makeUser(['name' => 'Ana Souza Lima', 'email' => 'ana.dona@exemplo.com']);
+        $pet = $this->makePet($owner);
+        $guest = $this->makeUser();
+
+        $code = $this->invite($pet)->code;
+        $first = $this->postJson("/api/invites/{$code}/accept", [], $this->bearer($guest));
+        // repetir o aceite (toque duplo) devolve o mesmo formato
+        $again = $this->postJson("/api/invites/{$code}/accept", [], $this->bearer($guest));
+
+        foreach ([$first, $again] as $response) {
+            $response->assertOk()
+                ->assertJsonMissingPath('user')
+                ->assertJsonPath('role', 'walker')
+                ->assertJsonPath('owner_name', 'Ana');
+            $this->assertStringNotContainsString('ana.dona@exemplo.com', $response->getContent());
+            $this->assertStringNotContainsString('Souza', $response->getContent());
+        }
+    }
+
     public function test_accept_twice_by_same_walker_is_idempotent(): void
     {
         $pet = $this->makePet($this->makeUser());

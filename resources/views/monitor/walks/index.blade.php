@@ -35,7 +35,12 @@
                             <a href="{{ route('monitor.walks.show', $walk) }}">{{ $walk->pet->name }}</a>
                         </div>
                     </td>
-                    <td><a href="{{ route('monitor.tutors.show', $walk->user) }}">{{ $walk->user->name }}</a></td>
+                    <td>
+                        <a href="{{ route('monitor.tutors.show', $walk->pet->user) }}">{{ $walk->pet->user->name }}</a>
+                        @if ($walk->user_id !== $walk->pet->user_id)
+                            <small class="muted">com <a href="{{ route('monitor.tutors.show', $walk->user) }}">{{ $walk->user->name }}</a></small>
+                        @endif
+                    </td>
                     <td class="muted">{{ $walk->started_at->format('d/m H:i') }}</td>
                     <td class="num">{{ intdiv($walk->duration_seconds, 60) }} min</td>
                     <td class="num">{{ number_format($walk->distance_meters / 1000, 2, ',', '.') }} km</td>

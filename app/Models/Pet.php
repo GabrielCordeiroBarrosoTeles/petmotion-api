@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Pet extends Model
 {
@@ -64,6 +65,21 @@ class Pet extends Model
     public function canBeWalkedBy(User $user): bool
     {
         return $this->isOwnedBy($user) || $this->walkers()->whereKey($user->id)->exists();
+    }
+
+    /**
+     * O pet como `viewer` o enxerga. `role` e `owner_name` dependem de quem pergunta, por isso não são
+     * `$appends`; o passeador recebe só o primeiro nome do dono (nunca e-mail, nome completo ou plano).
+     */
+    public function presentFor(User $viewer): self
+    {
+        if ($this->isOwnedBy($viewer)) {
+            return $this->setAttribute('role', 'owner')->unsetRelation('user');
+        }
+
+        return $this->setAttribute('role', 'walker')
+            ->setAttribute('owner_name', Str::before($this->user->name, ' '))
+            ->unsetRelation('user');
     }
 
     /** Pets que o usuário tem ou passeia. */
