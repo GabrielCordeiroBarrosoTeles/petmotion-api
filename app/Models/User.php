@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -61,5 +62,11 @@ class User extends Authenticatable
     public function walks(): HasMany
     {
         return $this->hasMany(Walk::class);
+    }
+
+    /** Pets de outras pessoas que este usuário passeia (por convite). */
+    public function walkingPets(): BelongsToMany
+    {
+        return $this->belongsToMany(Pet::class, 'pet_walkers')->withTimestamps();
     }
 }

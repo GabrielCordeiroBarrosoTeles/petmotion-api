@@ -3,10 +3,12 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HealthRecordController;
+use App\Http\Controllers\Api\InviteController;
 use App\Http\Controllers\Api\PetController;
 use App\Http\Controllers\Api\PremiumController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\WalkController;
+use App\Http\Controllers\Api\WalkerController;
 use App\Http\Controllers\Api\WeatherController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +30,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pets/{pet}/health-records', [HealthRecordController::class, 'index']);
     Route::post('/pets/{pet}/health-records', [HealthRecordController::class, 'store']);
     Route::delete('/health-records/{record}', [HealthRecordController::class, 'destroy']);
+
+    Route::post('/pets/{pet}/invites', [InviteController::class, 'store']);
+    Route::get('/invites/{code}', [InviteController::class, 'show']);
+    Route::post('/invites/{code}/accept', [InviteController::class, 'accept']);
+    Route::get('/pets/{pet}/walkers', [WalkerController::class, 'index']);
+    Route::delete('/pets/{pet}/walkers/{user}', [WalkerController::class, 'destroy']);
 
     Route::apiResource('walks', WalkController::class)->except('update');
 

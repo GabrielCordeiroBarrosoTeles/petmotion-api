@@ -33,6 +33,14 @@ abstract class TestCase extends BaseTestCase
         ]);
     }
 
+    protected function makeWalker(Pet $pet): User
+    {
+        $walker = $this->makeUser();
+        $pet->walkers()->attach($walker->id);
+
+        return $walker;
+    }
+
     protected function makeWalk(Pet $pet, Carbon $start, int $minutes = 30, int $meters = 2000, array $attributes = []): Walk
     {
         return $pet->user->walks()->create($attributes + [

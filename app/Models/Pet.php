@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasPhoto;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pet extends Model
@@ -41,5 +43,34 @@ class Pet extends Model
     public function healthRecords(): HasMany
     {
         return $this->hasMany(HealthRecord::class);
+    }
+
+    public function invites(): HasMany
+    {
+        return $this->hasMany(PetInvite::class);
+    }
+
+    public function walkers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'pet_walkers')->withTimestamps();
+    }
+
+    public function isOwnedBy(User $user): bool
+    {
+        return $this->user_id === $user->id;
+    }
+
+    /** Dono ou passeador. */
+    public function canBeWalkedBy(User $user): bool
+    {
+        return $this->isOwnedBy($user) || $this->walkers()->whereKey($user->id)->exists();
+    }
+
+    /** Pets que o usuário tem ou passeia. */
+    public function scopeAccessibleBy(Builder $query, User $user): Builder
+    {
+        return $query->where(fn (Builder $q) => $q
+            ->where('pets.user_id', $user->id)
+            ->orWhereIn('pets.id', $user->walkingPets()->select('pets.id')));
     }
 }
