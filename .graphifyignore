@@ -1,0 +1,7 @@
+# Dependências e arquivos gerados ficam fora do grafo
+vendor/
+node_modules/
+storage/
+bootstrap/cache/
+public/
+graphify-out/
