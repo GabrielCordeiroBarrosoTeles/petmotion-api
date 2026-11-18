@@ -88,7 +88,27 @@ class WalkTest extends TestCase
         $this->postJson('/api/walks', $this->payload($pet->id, ['companion_ids' => []]), $this->bearer($me))
             ->assertCreated()
             ->assertJsonPath('group_id', null)
-            ->assertJsonCount(0, 'companions');
+            ->assertJsonCount(0, 'companions')
+            ->assertJsonPath('group_walks', [['pet_id' => $pet->id, 'walk_id' => $pet->walks()->sole()->id]]);
+    }
+
+    public function test_store_group_returns_the_walk_of_each_pet_main_first(): void
+    {
+        $me = $this->makeUser();
+        $thor = $this->makePet($me);
+        $mel = $this->makePet($me, ['name' => 'Mel']);
+        $bidu = $this->makePet($me, ['name' => 'Bidu']);
+
+        $res = $this->postJson('/api/walks', $this->payload($mel->id, ['companion_ids' => [$bidu->id, $thor->id]]), $this->bearer($me))
+            ->assertCreated()
+            ->assertJsonCount(3, 'group_walks');
+
+        $this->assertSame([
+            ['pet_id' => $mel->id, 'walk_id' => $mel->walks()->sole()->id],
+            ['pet_id' => $bidu->id, 'walk_id' => $bidu->walks()->sole()->id],
+            ['pet_id' => $thor->id, 'walk_id' => $thor->walks()->sole()->id],
+        ], $res->json('group_walks'));
+        $this->assertSame($res->json('id'), $res->json('group_walks.0.walk_id'));
     }
 
     public function test_store_group_rejects_companion_of_another_user(): void

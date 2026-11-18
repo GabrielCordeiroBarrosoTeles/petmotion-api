@@ -71,18 +71,17 @@ class WalkController extends Controller
             $data['events'] ?? [],
         );
 
-        $walk = DB::transaction(function () use ($request, $data, $petIds) {
-            $walks = array_map(function ($petId) use ($request, $data) {
-                $walk = $request->user()->walks()->create(['pet_id' => $petId] + $data);
-                $walk->events()->createMany($data['events']);
+        $walks = DB::transaction(fn () => array_map(function ($petId) use ($request, $data) {
+            $walk = $request->user()->walks()->create(['pet_id' => $petId] + $data);
+            $walk->events()->createMany($data['events']);
 
-                return $walk;
-            }, $petIds);
+            return $walk;
+        }, $petIds));
 
-            return $walks[0];
-        });
+        // o registro de cada pet (o principal primeiro): quem passeou fecha o ao vivo de cada um com ele
+        $groupWalks = array_map(fn (Walk $w) => ['pet_id' => $w->pet_id, 'walk_id' => $w->id], $walks);
 
-        return response()->json($walk->withDetails($request->user()), 201);
+        return response()->json($walks[0]->withDetails($request->user())->setAttribute('group_walks', $groupWalks), 201);
     }
 
     public function show(Request $request, Walk $walk): JsonResponse
