@@ -6,10 +6,14 @@ use App\Events\LiveWalkUpdated;
 use App\Models\Pet;
 use App\Models\User;
 use App\Services\LiveWalkStore;
+use Illuminate\Broadcasting\Broadcasters\Broadcaster;
+use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -208,6 +212,90 @@ class LiveWalkTest extends TestCase
         $this->getJson("/api/pets/{$thor->id}/live", $this->as($ana))->assertOk();
         Carbon::setTestNow(now()->addMinutes(2));
         $this->getJson("/api/pets/{$thor->id}/live", $this->as($ana))->assertNoContent();
+    }
+
+    public function test_late_progress_or_cancel_does_not_touch_a_finished_walk(): void
+    {
+        $ana = $this->makeUser();
+        $thor = $this->makePet($ana);
+        $walker = $this->makeWalker($thor);
+        $session = $this->start($walker, [$thor->id]);
+        $walkId = $this->walkOf($thor, $walker);
+        $this->postJson("/api/live/{$session}/finish", ['walks' => [['pet_id' => $thor->id, 'walk_id' => $walkId]]], $this->as($walker))
+            ->assertNoContent();
+
+        $this->postJson("/api/live/{$session}/progress", $this->progress(['pet_ids' => [$thor->id]]), $this->as($walker))
+            ->assertStatus(409);
+        $this->postJson("/api/live/{$session}/cancel", ['pet_ids' => [$thor->id]], $this->as($walker))
+            ->assertStatus(409);
+        // finish repetido (o app não recebeu a resposta e tentou de novo) continua valendo
+        $this->postJson("/api/live/{$session}/finish", ['walks' => [['pet_id' => $thor->id, 'walk_id' => $walkId]]], $this->as($walker))
+            ->assertNoContent();
+
+        $state = $this->getJson("/api/pets/{$thor->id}/live", $this->as($ana))->assertOk()->json();
+        $this->assertSame('finished', $state['status']);
+        $this->assertSame($walkId, $state['walk_id']);
+        $this->assertSame([], $state['points']);
+        $this->assertCount(3, $this->broadcastsFor($thor));
+
+        // continua com a validade de 10 min do finalizado (não voltou para 3 h)
+        Carbon::setTestNow(now()->addMinutes(11));
+        $this->getJson("/api/pets/{$thor->id}/live", $this->as($ana))->assertNoContent();
+    }
+
+    public function test_progress_burst_broadcasts_only_the_last_200_points(): void
+    {
+        $ana = $this->makeUser();
+        $thor = $this->makePet($ana);
+        $session = $this->start($ana, [$thor->id]);
+        $points = array_map(fn ($i) => [-23 - $i / 100000, -46.0], range(0, 499));
+
+        $this->postJson("/api/live/{$session}/progress", $this->progress(['pet_ids' => [$thor->id], 'points' => $points]), $this->as($ana))
+            ->assertNoContent();
+
+        $sent = $this->broadcastsFor($thor)[1];
+        $this->assertCount(200, $sent['new_points']);
+        $this->assertEquals(array_slice($points, -200), $sent['new_points']);
+        $this->assertTrue($sent['truncated']);
+        $this->assertCount(500, app(LiveWalkStore::class)->get($thor->id)['points']);
+        $this->assertEquals($points, app(LiveWalkStore::class)->get($thor->id)['points']);
+    }
+
+    public function test_broadcast_failure_does_not_break_the_api(): void
+    {
+        // dispatcher real + driver que sempre falha (Reverb fora do ar)
+        Event::swap(Event::getFacadeRoot()->dispatcher);
+        Exceptions::fake();
+        Broadcast::extend('down', fn () => new class extends Broadcaster
+        {
+            public function auth($request) {}
+
+            public function validAuthenticationResponse($request, $result) {}
+
+            public function broadcast(array $channels, $event, array $payload = []): void
+            {
+                throw new BroadcastException('Reverb fora do ar');
+            }
+        });
+        config(['broadcasting.default' => 'down', 'broadcasting.connections.down' => ['driver' => 'down']]);
+
+        $ana = $this->makeUser();
+        $carlos = $this->makeUser();
+        $thor = $this->makePet($ana);
+        $bidu = $this->makePet($carlos, ['name' => 'Bidu']);
+        $walker = $this->makeWalker($thor);
+        $bidu->walkers()->attach($walker->id);
+
+        $session = $this->start($walker, [$thor->id, $bidu->id]);
+        $this->postJson("/api/live/{$session}/progress", $this->progress(['pet_ids' => [$thor->id, $bidu->id]]), $this->as($walker))
+            ->assertNoContent();
+
+        foreach ([$thor, $bidu] as $pet) {
+            $state = app(LiveWalkStore::class)->get($pet->id);
+            $this->assertSame($session, $state['session']);
+            $this->assertCount(2, $state['points']);
+        }
+        Exceptions::assertReported(BroadcastException::class);
     }
 
     public function test_cancel_clears_state(): void

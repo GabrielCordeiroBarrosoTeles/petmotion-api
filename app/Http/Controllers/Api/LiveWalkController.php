@@ -25,6 +25,9 @@ class LiveWalkController extends Controller
         'pet_ids.*' => ['integer', 'distinct'],
     ];
 
+    /** Pontos novos que vão no socket (o Reverb limita a mensagem a ~10 KB); a rota inteira fica no GET live. */
+    private const BROADCAST_POINTS = 200;
+
     public function __construct(private LiveWalkStore $store) {}
 
     public function start(Request $request): JsonResponse
@@ -81,7 +84,7 @@ class LiveWalkController extends Controller
                 'steps' => $data['steps'],
                 'points' => array_slice([...$state['points'], ...$data['points']], -LiveWalkStore::MAX_POINTS),
                 'counts' => Arr::only($data['counts'], ['pee', 'poop', 'water']),
-            ] + $state, ['new_points' => $data['points']]);
+            ] + $state, $this->newPoints($data['points']));
         }
 
         return response()->noContent();
@@ -95,7 +98,7 @@ class LiveWalkController extends Controller
             'walks.*.walk_id' => ['required', 'integer'],
         ]);
         $walkIds = Arr::pluck($data['walks'], 'walk_id', 'pet_id');
-        $states = $this->currentStates($request, array_keys($walkIds), $session);
+        $states = $this->currentStates($request, array_keys($walkIds), $session, allowFinished: true);
 
         // o dono abre o registro apontado: tem que ser deste pet e de quem passeou
         foreach ($walkIds as $petId => $walkId) {
@@ -115,7 +118,7 @@ class LiveWalkController extends Controller
 
         foreach (array_keys($this->currentStates($request, $data['pet_ids'], $session)) as $petId) {
             $this->store->forget($petId);
-            event(new LiveWalkUpdated($petId, ['session' => $session, 'pet_id' => $petId, 'status' => 'cancelled']));
+            $this->broadcast($petId, ['session' => $session, 'pet_id' => $petId, 'status' => 'cancelled']);
         }
 
         return response()->noContent();
@@ -139,16 +142,17 @@ class LiveWalkController extends Controller
     }
 
     /**
-     * Estados dos pets nesta sessão. Outra sessão (mais nova) ou nenhuma: 409, sem mexer em nada.
+     * Estados dos pets nesta sessão. Outra sessão (mais nova), nenhuma, ou já finalizada (progresso ou
+     * cancelamento atrasado não pode ressuscitar nem apagar o passeio pronto): 409, sem mexer em nada.
      *
      * @return array<int, array<string, mixed>>
      */
-    private function currentStates(Request $request, array $petIds, string $session): array
+    private function currentStates(Request $request, array $petIds, string $session, bool $allowFinished = false): array
     {
         $states = [];
         foreach ($this->walkablePets($request, $petIds) as $pet) {
             $state = $this->store->get($pet->id);
-            abort_unless(($state['session'] ?? null) === $session, 409);
+            abort_unless(($state['session'] ?? null) === $session && ($allowFinished || $state['status'] !== 'finished'), 409);
             $states[$pet->id] = $state;
         }
 
@@ -158,6 +162,19 @@ class LiveWalkController extends Controller
     private function save(int $petId, array $state, array $extra = []): void
     {
         $this->store->put($petId, $state);
-        event(new LiveWalkUpdated($petId, Arr::except($state, 'points') + $extra));
+        $this->broadcast($petId, Arr::except($state, 'points') + $extra);
+    }
+
+    /** Socket fora do ar não derruba a API: o estado já está salvo e o dono recupera pelo GET live. */
+    private function broadcast(int $petId, array $payload): void
+    {
+        rescue(fn () => event(new LiveWalkUpdated($petId, $payload)));
+    }
+
+    private function newPoints(array $points): array
+    {
+        return count($points) > self::BROADCAST_POINTS
+            ? ['new_points' => array_slice($points, -self::BROADCAST_POINTS), 'truncated' => true]
+            : ['new_points' => $points];
     }
 }
