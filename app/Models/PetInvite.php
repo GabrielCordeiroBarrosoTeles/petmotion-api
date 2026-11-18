@@ -40,6 +40,13 @@ class PetInvite extends Model
         return $query->whereNull('accepted_at')->where('expires_at', '>', now());
     }
 
+    /** Reivindica o convite de forma atômica: só um usuário consegue, mesmo com aceites simultâneos. */
+    public function claimFor(User $user): bool
+    {
+        return static::open()->whereKey($this->id)
+            ->update(['accepted_by' => $user->id, 'accepted_at' => now()]) === 1;
+    }
+
     public function pet(): BelongsTo
     {
         return $this->belongsTo(Pet::class);

@@ -7,6 +7,7 @@ use App\Models\Pet;
 use App\Models\PetInvite;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class InviteController extends Controller
@@ -64,8 +65,10 @@ class InviteController extends Controller
             return $this->ownPet();
         }
 
-        $invite->update(['accepted_by' => $user->id, 'accepted_at' => now()]);
-        $pet->walkers()->syncWithoutDetaching([$user->id]);
+        DB::transaction(function () use ($invite, $pet, $user) {
+            abort_unless($invite->claimFor($user), 404);
+            $pet->walkers()->syncWithoutDetaching([$user->id]);
+        });
         $pet->setAttribute('role', 'walker');
 
         return response()->json($pet);

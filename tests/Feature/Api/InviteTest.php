@@ -6,6 +6,7 @@ use App\Models\Pet;
 use App\Models\PetInvite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class InviteTest extends TestCase
@@ -171,5 +172,25 @@ class InviteTest extends TestCase
         $this->assertSame([$mine->id, $walked->id], $ids);
         $this->assertTrue($mine->isOwnedBy($me));
         $this->assertTrue($mine->canBeWalkedBy($me));
+    }
+
+    public function test_invite_burned_between_read_and_claim_gives_404_and_single_walker(): void
+    {
+        $pet = $this->makePet($this->makeUser());
+        $invite = $this->invite($pet);
+        $first = $this->makeUser();
+        $second = $this->makeUser();
+
+        // simula o outro aceite vencendo a corrida logo depois da leitura do convite
+        PetInvite::retrieved(function (PetInvite $i) use ($first) {
+            DB::table('pet_invites')->where('id', $i->id)
+                ->update(['accepted_by' => $first->id, 'accepted_at' => now()]);
+            $i->pet->walkers()->syncWithoutDetaching([$first->id]);
+        });
+
+        $this->postJson("/api/invites/{$invite->code}/accept", [], $this->bearer($second))->assertNotFound();
+
+        $this->assertSame([$first->id], $pet->walkers()->pluck('users.id')->all());
+        $this->assertSame($first->id, $invite->fresh()->accepted_by);
     }
 }
